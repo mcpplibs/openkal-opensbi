@@ -1,0 +1,44 @@
+# openkal on the RISC-V Supervisor Binary Interface.
+#
+# ⭐ THE PORTABLE RISC-V BACKEND, AS DISTINCT FROM A BOARD'S OWN.
+#
+# A board-supplied backend writes to a device address, and that address is a
+# board fact: the same binary on a second RISC-V machine writes to something
+# that is not a UART — it compiles, links, runs, and prints nothing. SBI has no
+# such property, because the console is a call into firmware that already knows
+# the machine. One binary therefore runs under OpenSBI on QEMU's `virt` and on a
+# real board without being rebuilt.
+#
+# Both kinds are legitimate and a project picks by which property it needs: SBI
+# requires firmware beneath it, a board backend does not.
+[package]
+namespace   = "mcpplibs"
+name        = "openkal-opensbi"
+version     = "0.1.0"
+description = "An implementation of openkal on the RISC-V Supervisor Binary Interface, portable across every machine whose firmware provides one"
+license     = "Apache-2.0"
+authors     = ["mcpplibs"]
+repo        = "https://github.com/mcpplibs/openkal-opensbi"
+
+# The contract, not an implementation of it. Declaring it turns a version
+# mismatch into a resolution-time message rather than a link-time one.
+[dependencies]
+openkal = "0.5.1"
+
+[build]
+# The same reasoning openkal's other implementations record: no exception may
+# propagate out of a C entry point, and beneath a supervisor there is no
+# unwinder to carry one. The stack protector reads a value from thread-local
+# storage that nothing here has established.
+flags = [
+  { glob = "src/**", cxxflags = ["-fno-exceptions", "-fno-rtti",
+                                 "-fno-stack-protector",
+                                 "-fno-asynchronous-unwind-tables"] },
+]
+
+# ⚠️ The heap size is a build input because SBI provides no allocator and the
+# region therefore has to come from somewhere. 64 KiB is enough for the
+# allocating half of the freestanding standard library on a small program and
+# small enough not to matter in an image; a project that needs another figure
+# overrides the define rather than editing this package.
+defines = ["OPENKAL_OPENSBI_HEAP_BYTES=65536"]

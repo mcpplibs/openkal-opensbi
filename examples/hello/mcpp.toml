@@ -1,0 +1,17 @@
+[package]
+name    = "hello"
+version = "0.1.0"
+
+[build]
+target  = "riscv64-none-elf"
+
+# No board package: SBI is the whole environment this program needs, and the
+# firmware is what QEMU loads with `-bios default`.
+[target.riscv64-none-elf]
+sysroot = ""
+runner  = ["qemu-system-riscv64", "-machine", "virt", "-nographic",
+           "-no-reboot", "-bios", "default", "-kernel"]
+
+[dependencies]
+openkal         = "0.5.1"
+openkal-opensbi = { path = "../.." }
