@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: boots under real OpenSBI
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      MCPP_VERSION: 2026.8.20.2
+      XLINGS_VERSION: v2026.8.17.2
+      XLINGS_NON_INTERACTIVE: '1'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install xlings
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/openxlings/xlings/main/tools/other/quick_install.sh \
+            | bash -s "$XLINGS_VERSION"
+          echo "$HOME/.xlings/subos/current/bin" >> "$GITHUB_PATH"
+
+      - name: Install mcpp
+        run: |
+          xlings update
+          xlings install "mcpp@$MCPP_VERSION" -y -g
+          mcpp --version
+          mcpp self config --mirror GLOBAL
+
+      - name: Install the emulator
+        run: |
+          # Both homes: the shim on PATH dispatches against whichever home owns
+          # it, while mcpp starts the runner through its own.
+          xlings install xim:qemu-riscv -y
+          XLINGS_HOME="$HOME/.mcpp/registry" xlings install xim:qemu-riscv -y
+
+      # ⚠️ The assertion is on the OUTPUT, not on the exit status. A firmware
+      # that never reaches the payload exits zero, and so does a payload whose
+      # console writes go nowhere — which is precisely the failure this backend
+      # exists to avoid on a second machine.
+      - name: The example prints under `-bios default`
+        run: |
+          set -euo pipefail
+          cd examples/hello
+          Q=$(ls -d "$HOME"/.mcpp/registry/data/xpkgs/xim-x-qemu-riscv/*/bin/qemu-system-riscv64 | head -1)
+          sed -i "s|\"qemu-system-riscv64\"|\"$Q\"|" mcpp.toml
+          mcpp run 2>&1 | tee run.log
+          grep -q "hello from openkal over SBI" run.log
+          grep -q "heap ok" run.log
