@@ -78,6 +78,13 @@ jobs:
           mcpp run 2>&1 | tee run.log
           grep -q "hello from openkal over SBI" run.log
           grep -q "heap ok" run.log
+          # ⚠️ `clock ok` is the line that distinguishes a counter that reads
+          # from a counter that MOVES. The example takes two readings with a
+          # sleep between them; a stuck clock reads fine and prints
+          # `clock stuck`. Verified to print it, by returning a constant from
+          # `kal_time_monotonic` and rerunning.
+          grep -q "clock ok" run.log
+          grep -q "env empty" run.log
 
   # ---------------------------------------------------------------------------
   # The cross-compilation is performed FROM three systems, not only from Linux.

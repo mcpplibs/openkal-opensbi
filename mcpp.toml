@@ -36,9 +36,18 @@ flags = [
                                  "-fno-asynchronous-unwind-tables"] },
 ]
 
-# ⚠️ The heap size is a build input because SBI provides no allocator and the
+# ⚠️ TWO FIGURES THAT BELONG TO THE MACHINE, DECLARED RATHER THAN ASSUMED.
+#
+# The heap size is a build input because SBI provides no allocator and the
 # region therefore has to come from somewhere. 64 KiB is enough for the
 # allocating half of the freestanding standard library on a small program and
 # small enough not to matter in an image; a project that needs another figure
 # overrides the define rather than editing this package.
-defines = ["OPENKAL_OPENSBI_HEAP_BYTES=65536"]
+#
+# The timebase is a build input because `rdtime` counts at a rate the
+# architecture does not fix. It is published in the device tree, which the entry
+# contract does not forward, so a project that runs on other hardware states it
+# here. The default is QEMU's `virt`. src/time.cpp records why this is an input
+# and what a project that leaves it wrong gets.
+defines = ["OPENKAL_OPENSBI_HEAP_BYTES=65536",
+           "OPENKAL_OPENSBI_TIMEBASE_HZ=10000000"]

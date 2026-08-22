@@ -23,16 +23,45 @@ requires firmware beneath it, a board backend does not.
 
 ## What is implemented
 
-`abort`, `stream` and `memory` — openkal's core set. An implementation provides
-an interface in whole or not at all, so the absence of `fs`, `process`, `task`,
-`env` and `time` is not a deviation; `import openkal.task;` simply does not
-resolve.
+`abort`, `stream` and `memory` — openkal's core set — plus `time` and `env`. An
+implementation provides an interface in whole or not at all, so the absence of
+`fs`, `process` and `task` is not a deviation; `import openkal.task;` simply
+does not resolve. This machine has no storage, no second image to start and no
+scheduler, and clause 6.2 says the remedy for an operation that cannot be
+provided is that its absence be expressed by its absence rather than by a
+run-time refusal.
 
-⚠️ **`time` is absent deliberately, and SBI does have a timer.** SBI can arm a
-timer interrupt, which is a mechanism for a kernel rather than a clock a program
-can read. Reporting a clock that does not advance would make every timed wait
-silently wrong — the specification's own example of a simulation that
-disqualifies an interface from being provided at all.
+⚠️ **`time` used to be on that list, with a reason, and the reason was wrong.**
+
+It read: SBI can arm a timer interrupt, which is a mechanism for a kernel rather
+than a clock a program can read. The first half is true. The second does not
+follow from it — this architecture also exposes `rdtime` directly to the
+program, through the `time` CSR, independently of SBI's timer extension. Two
+different facilities, and the absence of the first says nothing about the
+second.
+
+Measured 2026-08-23 under OpenSBI on QEMU's `virt`, from supervisor mode with no
+kernel beneath:
+
+```
+t0=333572 t1=381292  ADVANCES
+```
+
+⭐ The conclusion got rechecked and the reason beside it did not. The two
+minutes that refuted it had been available for as long as the file existed.
+
+`time` is therefore provided: a monotonic count, an exact granularity, and a
+sleep that spins on the same counter — which on a machine with one execution
+context and nothing to yield to is what sleeping *is*, so
+`KAL_TIME_PROP_SLEEP_PRECISE` is set truthfully. **Not** a wall clock: SBI
+defines no facility for one, `KAL_TIME_PROP_WALL_AVAILABLE` is clear, and clause
+6.2 makes that a property rather than a missing interface.
+
+`env` is provided and every answer is empty. That is an implementation, not a
+stub: firmware enters the image with a hart identifier and a device tree, and
+neither is a command line, so this environment *has* an environment and it has
+nothing in it. A caller enumerating zero things needs no special case, which is
+exactly what distinguishes this from the run-time refusal clause 6.2 forbids.
 
 ## The heap is a bump allocator, and that is a bound rather than an omission
 

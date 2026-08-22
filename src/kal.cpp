@@ -15,13 +15,20 @@
 //
 // WHAT IS IMPLEMENTED
 //
-// abort, stream and memory: openkal's core set. An implementation provides an
-// interface in whole or not at all, so the absence of fs, process, task, env
-// and time is not a deviation. `time` is deliberately absent even though SBI
-// has a timer extension: SBI can arm a timer interrupt, which is a mechanism
-// for a kernel rather than a clock a program can read, and reporting a clock
-// that does not advance would make every timed wait silently wrong — the
-// specification's own example of a simulation that disqualifies an interface.
+// This file: abort, stream and memory — openkal's core set. Beside it,
+// time.cpp and env.cpp. An implementation provides an interface in whole or not
+// at all, so the absence of fs, process and task is not a deviation: this
+// machine has no storage, no second image to start, and no scheduler, and
+// clause 6.2 says the remedy for an operation that cannot be provided is that
+// its absence be expressed by its absence rather than by a run-time refusal.
+//
+// ⚠️ `time` USED TO BE ON THAT LIST, WITH A REASON, AND THE REASON WAS WRONG.
+//
+// It read: SBI can arm a timer interrupt, which is a mechanism for a kernel
+// rather than a clock a program can read. The first half is true; the second
+// does not follow, because this architecture exposes `rdtime` to the program
+// independently of SBI. Measured under OpenSBI on QEMU's `virt` and it
+// advances. time.cpp records the measurement and what it cost to not take it.
 
 #include <openkal/abort.h>
 #include <openkal/memory.h>
