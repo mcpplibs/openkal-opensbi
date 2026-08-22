@@ -45,14 +45,18 @@ int main(int, char**, char**);
 
 }
 
-namespace {
-
 using initialiser = void (*)(int, char**, char**);
 
+// ⚠️ NOT in an anonymous namespace, and that is the compiler's rule rather than
+// a preference: internal linkage and a weak declaration are contradictory, and
+// clang says so in as many words. The linker script defines these, and a
+// program built without one gets the null range the weak declaration is for.
 [[gnu::weak]] extern initialiser __preinit_array_start[];
 [[gnu::weak]] extern initialiser __preinit_array_end[];
 [[gnu::weak]] extern initialiser __init_array_start[];
 [[gnu::weak]] extern initialiser __init_array_end[];
+
+namespace {
 
 void run_initialisers() {
     // ⚠️ Only when no C library took the hand-over. One that did runs these
