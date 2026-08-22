@@ -143,7 +143,10 @@ namespace {
 struct region { unsigned char* base; kal_uintptr size; };
 
 region heap_region() {
-    if (__heap_start != nullptr && __heap_end > __heap_start)
+    // ⚠️ `+` on each: these are arrays, and comparing two arrays directly is
+    // deprecated in this dialect because it compares addresses while reading
+    // like a comparison of contents. Decaying them says which was meant.
+    if (+__heap_start != nullptr && +__heap_end > +__heap_start)
         return { __heap_start, (kal_uintptr)(__heap_end - __heap_start) };
     return { g_heap, sizeof g_heap };
 }

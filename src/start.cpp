@@ -33,6 +33,7 @@
 #ifdef OPENKAL_OPENSBI_STANDALONE
 
 #include <openkal/abort.h>
+#include <openkal/memory.h>
 
 extern "C" {
 
@@ -66,6 +67,88 @@ void run_initialisers() {
         (*p)(0, &nothing, &nothing);
     for (initialiser* p = __init_array_start; p != __init_array_end; ++p)
         (*p)(0, &nothing, &nothing);
+}
+
+}  // namespace
+
+// ⭐⭐ THE THREAD POINTER, WHICH IS THE OTHER THING A KERNEL WOULD HAVE DONE.
+//
+// openkal-linux's start object establishes it too, and for the same reason: the
+// register that names the current context's thread-local storage is set by
+// whoever creates the context, and where a program carries no loader, that is
+// the implementation.
+//
+// ⚠️ WHAT IT LOOKS LIKE WHEN IT IS MISSING IS NOT "NO THREAD-LOCAL STORAGE".
+//
+// Measured 2026-08-23. A bare-metal `import std;` program started, printed, and
+// faulted at the first `throw`:
+//
+//     fault_load  epc = __cxa_throw  tval = 0x80048008
+//     cxa_exception.cpp:284  globals->uncaughtExceptions += 1
+//
+// `__cxa_get_globals` reads a thread_local, `tp` held whatever it held at
+// reset, and the load went somewhere in the firmware's own memory. Nothing
+// about the message says "thread pointer": it names an exception function and
+// an address, and both look like memory corruption.
+//
+// ⚠️ AND THE C LIBRARY DOES NOT COVER THIS. openkal-musl keeps ITS OWN thread
+// pointer in a variable rather than in the register --- that is what lets it
+// run where the register means nothing --- so musl's startup succeeding says
+// nothing about whether the TOOLCHAIN's thread-locals work. Two mechanisms,
+// and only one of them was established.
+// ⚠️ FROM THE LINKER SCRIPT, NOT FROM THE PROGRAM HEADERS.
+//
+// The obvious source is PT_TLS, reached through `__ehdr_start`. That requires
+// the ELF header to lie inside a loaded segment, which requires it to be at the
+// lowest loaded address --- and firmware jumps to the lowest loaded address, so
+// the header would be executed. Measured: the machine hangs on `\x7fELF`.
+//
+// So the script states the three measurements, exactly as it already states
+// where the stack and the heap are, and for the same reason: they are facts
+// about the image's layout and the image is the program's. A program whose
+// script does not define them gets no thread-local storage established, which
+// is correct for one whose toolchain put its thread-locals somewhere else.
+extern "C" {
+[[gnu::weak]] extern unsigned char __tls_start[];
+[[gnu::weak]] extern unsigned char __tls_filesz[];
+[[gnu::weak]] extern unsigned char __tls_memsz[];
+}
+
+namespace {
+
+kal_uintptr round_up(kal_uintptr n, kal_uintptr to) { return (n + to - 1) & ~(to - 1); }
+
+// Variant I with no gap: on this architecture `tp` addresses the first byte of
+// the block and every offset the linker computed is positive from there. That
+// is the psABI's statement, and musl's own header for this architecture repeats
+// it as `TLS_ABOVE_TP` with `GAP_ABOVE_TP 0` --- which is where this was taken
+// from rather than from memory.
+void establish_thread_pointer() {
+    // ⚠️ These symbols carry their VALUE in their ADDRESS. A linker script
+    // assignment defines an absolute symbol; there is no object to load from,
+    // and reading one as if there were gives whatever lies at that address.
+    const auto filesz = reinterpret_cast<kal_uintptr>(__tls_filesz);
+    const auto memsz  = reinterpret_cast<kal_uintptr>(__tls_memsz);
+    if (memsz == 0) return;
+
+    // 16 rather than the segment's own alignment, which the script does not
+    // state: over-aligning a block is always safe, and every offset the linker
+    // computed stays valid because they are measured from the block's start.
+    const kal_uintptr align = 16;
+    // The extra room is for what a C library places beside the block. musl puts
+    // its own descriptor below `tp`; this allocation is never returned, so being
+    // generous costs nothing that is later wanted.
+    const kal_uintptr bytes = round_up(memsz, align) + 128;
+    auto* p = static_cast<unsigned char*>(kal_alloc(bytes, align));
+    if (p == nullptr) {
+        static const char m[] =
+            "openkal-opensbi: no memory for this context's thread-local storage";
+        kal_abort(m, sizeof m - 1);
+    }
+    for (kal_uintptr i = 0; i < bytes; ++i) p[i] = 0;
+    for (kal_uintptr i = 0; i < filesz; ++i) p[i] = __tls_start[i];
+
+    __asm__ __volatile__("mv tp, %0" :: "r"(p));
 }
 
 }  // namespace
@@ -113,6 +196,10 @@ extern "C" [[noreturn]] void __okb_start_c(void) {
     // that there are none. Passing the same answer here keeps the two from
     // disagreeing.
     static char* nothing = nullptr;
+
+    // Before anything with thread-local state runs, which includes the C
+    // library's own initialisation.
+    establish_thread_pointer();
 
     if (__libc_start_main != nullptr) {
         __libc_start_main(main, 0, &nothing, nullptr, nullptr, nullptr);
