@@ -70,6 +70,26 @@ void run_initialisers() {
 
 }  // namespace
 
+// ⭐ WHAT crtbegin WOULD HAVE SUPPLIED, AND WHY ITS ABSENCE IS A LINK ERROR
+// ABOUT A RELOCATION RANGE RATHER THAN ABOUT A MISSING NAME.
+//
+// Every static object with a destructor registers it through `__cxa_atexit`,
+// and the third argument identifies the image the object belongs to. In an
+// ordinary link that identifier comes from crtbegin. There is no crtbegin here,
+// so the linker synthesises one — at address zero, because it has no better
+// idea — and the image is at 0x80200000. The distance between them is 2.05 GiB,
+// which is outside what `auipc` can reach even under `-mcmodel=medany`:
+//
+//     relocation R_RISCV_PCREL_HI20 out of range: -525086
+//     references '__dso_handle'
+//
+// ⚠️ A reader who has not seen this before will read that as a code-model
+// problem, and the code model is already the widest one. The problem is that
+// the symbol is not in the image. Defining it here puts it in the image, and
+// the value is its own address because that is what identifies an image
+// uniquely and is what an ordinary link produces.
+extern "C" { void* __dso_handle = &__dso_handle; }
+
 // The stack, then C. `la` of a linker-defined symbol resolves at link time, so
 // the sequence needs nothing to have been set up before it runs --- which is
 // the situation it is in.
