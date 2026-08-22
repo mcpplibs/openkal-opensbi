@@ -23,7 +23,7 @@ repo        = "https://github.com/mcpplibs/openkal-opensbi"
 # The contract, not an implementation of it. Declaring it turns a version
 # mismatch into a resolution-time message rather than a link-time one.
 [dependencies]
-openkal = "0.5.1"
+openkal = { git = "https://github.com/mcpplibs/openkal", branch = "feat/openkal-closure" }
 
 [build]
 # The same reasoning openkal's other implementations record: no exception may
