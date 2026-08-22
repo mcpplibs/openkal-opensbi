@@ -25,6 +25,21 @@ repo        = "https://github.com/mcpplibs/openkal-opensbi"
 [dependencies]
 openkal = { git = "https://github.com/mcpplibs/openkal", branch = "feat/openkal-closure" }
 
+# ⭐ WHAT RECEIVES CONTROL, WHICH IS A STATEMENT ABOUT THE PROGRAM.
+#
+# A program that already carries a runtime has an entry object of its own and
+# must not get a second. A program that does not — one whose C library is
+# openkal-musl, or one written directly against openkal — needs something to
+# make a stack exist and call it. src/start.cpp is that something, and it is
+# compiled only when this feature says the second arrangement holds.
+#
+# It is not a smaller or faster variant of this implementation. It is the same
+# distinction openkal-linux and openkal-windows draw with the same name, and the
+# consumer that knows which arrangement holds is the one that declares it —
+# which is why openkal-musl declares it and this package does not default it on.
+[features]
+standalone = { defines = ["OPENKAL_OPENSBI_STANDALONE"] }
+
 [build]
 # The same reasoning openkal's other implementations record: no exception may
 # propagate out of a C entry point, and beneath a supervisor there is no
