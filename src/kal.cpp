@@ -15,13 +15,20 @@
 //
 // WHAT IS IMPLEMENTED
 //
-// abort, stream and memory: openkal's core set. An implementation provides an
-// interface in whole or not at all, so the absence of fs, process, task, env
-// and time is not a deviation. `time` is deliberately absent even though SBI
-// has a timer extension: SBI can arm a timer interrupt, which is a mechanism
-// for a kernel rather than a clock a program can read, and reporting a clock
-// that does not advance would make every timed wait silently wrong — the
-// specification's own example of a simulation that disqualifies an interface.
+// This file: abort, stream and memory — openkal's core set. Beside it,
+// time.cpp and env.cpp. An implementation provides an interface in whole or not
+// at all, so the absence of fs, process and task is not a deviation: this
+// machine has no storage, no second image to start, and no scheduler, and
+// clause 6.2 says the remedy for an operation that cannot be provided is that
+// its absence be expressed by its absence rather than by a run-time refusal.
+//
+// ⚠️ `time` USED TO BE ON THAT LIST, WITH A REASON, AND THE REASON WAS WRONG.
+//
+// It read: SBI can arm a timer interrupt, which is a mechanism for a kernel
+// rather than a clock a program can read. The first half is true; the second
+// does not follow, because this architecture exposes `rdtime` to the program
+// independently of SBI. Measured under OpenSBI on QEMU's `virt` and it
+// advances. time.cpp records the measurement and what it cost to not take it.
 
 #include <openkal/abort.h>
 #include <openkal/memory.h>
@@ -102,6 +109,50 @@ kal_uintptr g_used = 0;
 
 }  // namespace
 
+// ⭐ AND THE PROGRAM MAY SAY WHERE INSTEAD, FOR THE SAME REASON IT SAYS WHERE
+// THE STACK IS.
+//
+// The region above is a static array, which means its size is in the image and
+// is paid for by every program whether or not it allocates. 64 KiB is a
+// reasonable figure for a program that allocates a little; a program that
+// carries a C library and a C++ standard library allocates during its own
+// initialisation, before `main`, and 64 KiB does not survive it.
+//
+// ⚠️ AND THE WAY THAT SHOWS IS NOT A DIAGNOSTIC. Measured 2026-08-23: a
+// bare-metal `import std;` program linked, started, and printed NOTHING — the
+// allocator ran out inside the standard library's static initialisation, before
+// any stream existed to report it on. A message would have needed the very
+// facility that had not come up yet.
+//
+// Raising the default would put the cost on every program including the ones
+// that do not allocate. So the size is where the stack's size already is: the
+// program's linker script. `__heap_start` and `__heap_end` are weak, so a
+// script that does not define them leaves the static region in use and nothing
+// changes for a program that was working.
+extern "C" {
+[[gnu::weak]] extern unsigned char __heap_start[];
+[[gnu::weak]] extern unsigned char __heap_end[];
+}
+
+namespace {
+
+// Which region is in use, decided once. A script that defines the pair and gets
+// the order wrong is ignored rather than trusted: an end below a start would
+// otherwise make every allocation appear to succeed into memory that is not
+// the heap, which is the failure this whole package is written to avoid.
+struct region { unsigned char* base; kal_uintptr size; };
+
+region heap_region() {
+    // ⚠️ `+` on each: these are arrays, and comparing two arrays directly is
+    // deprecated in this dialect because it compares addresses while reading
+    // like a comparison of contents. Decaying them says which was meant.
+    if (+__heap_start != nullptr && +__heap_end > +__heap_start)
+        return { __heap_start, (kal_uintptr)(__heap_end - __heap_start) };
+    return { g_heap, sizeof g_heap };
+}
+
+}  // namespace
+
 extern "C" {
 
 // ── openkal.abort ───────────────────────────────────────────────────────────
@@ -172,10 +223,11 @@ kal_uintptr kal_stream_props(kal_stream s) {
 void* kal_alloc(kal_uintptr size, kal_uintptr align) {
     if (size == 0) size = 1;
     if (align == 0) align = 1;
-    const kal_uintptr base = reinterpret_cast<kal_uintptr>(g_heap);
+    const region r = heap_region();
+    const kal_uintptr base = reinterpret_cast<kal_uintptr>(r.base);
     kal_uintptr p = (base + g_used + align - 1) & ~(align - 1);
     const kal_uintptr end = p + size;
-    if (end > base + sizeof g_heap) return nullptr;   // exhaustion, reported
+    if (end > base + r.size) return nullptr;          // exhaustion, reported
     g_used = end - base;
     return reinterpret_cast<void*>(p);
 }

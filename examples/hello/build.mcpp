@@ -1,8 +1,9 @@
 import mcpp;
-int main() {
-    // A relative path in `ldflags` would resolve against the build directory;
-    // `link-script` resolves against the package root.
-    mcpp::link_script("link.ld");
-    mcpp::rerun_if_changed("link.ld");
-    return 0;
-}
+
+// Nothing to state. The memory map comes from `openkal-opensbi`, which is the
+// package that knows where this firmware hands control over; this example
+// carried a copy of it until 2026-08-23.
+//
+// The file remains because a build program is how this example would say
+// anything at all, and its absence would read as "this was never considered".
+int main() { return 0; }

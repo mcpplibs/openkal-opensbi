@@ -14,16 +14,41 @@
 [package]
 namespace   = "mcpplibs"
 name        = "openkal-opensbi"
-version     = "0.1.0"
+version     = "0.1.1"
 description = "An implementation of openkal on the RISC-V Supervisor Binary Interface, portable across every machine whose firmware provides one"
 license     = "Apache-2.0"
+
+# The layer this package supplies, in the vocabulary the engine resolves.
+#
+# `mcpp:kernel-abi` names the platform interface a C library sits on. On a
+# traditional stack that seam is unnamed — a C library issues system calls or
+# calls the platform's own entry points directly — and naming it is what lets
+# one C library sit above several platforms. `=openkal` is the interface this
+# package answers to; several packages answer to it and the engine knows none
+# of them by name.
+provides    = ["mcpp:kernel-abi=openkal"]
 authors     = ["mcpplibs"]
 repo        = "https://github.com/mcpplibs/openkal-opensbi"
 
 # The contract, not an implementation of it. Declaring it turns a version
 # mismatch into a resolution-time message rather than a link-time one.
 [dependencies]
-openkal = "0.5.1"
+openkal = { git = "https://github.com/mcpplibs/openkal", branch = "feat/openkal-closure" }
+
+# ⭐ WHAT RECEIVES CONTROL, WHICH IS A STATEMENT ABOUT THE PROGRAM.
+#
+# A program that already carries a runtime has an entry object of its own and
+# must not get a second. A program that does not — one whose C library is
+# openkal-musl, or one written directly against openkal — needs something to
+# make a stack exist and call it. src/start.cpp is that something, and it is
+# compiled only when this feature says the second arrangement holds.
+#
+# It is not a smaller or faster variant of this implementation. It is the same
+# distinction openkal-linux and openkal-windows draw with the same name, and the
+# consumer that knows which arrangement holds is the one that declares it —
+# which is why openkal-musl declares it and this package does not default it on.
+[features]
+standalone = { defines = ["OPENKAL_OPENSBI_STANDALONE"] }
 
 [build]
 # The same reasoning openkal's other implementations record: no exception may
@@ -36,9 +61,18 @@ flags = [
                                  "-fno-asynchronous-unwind-tables"] },
 ]
 
-# ⚠️ The heap size is a build input because SBI provides no allocator and the
+# ⚠️ TWO FIGURES THAT BELONG TO THE MACHINE, DECLARED RATHER THAN ASSUMED.
+#
+# The heap size is a build input because SBI provides no allocator and the
 # region therefore has to come from somewhere. 64 KiB is enough for the
 # allocating half of the freestanding standard library on a small program and
 # small enough not to matter in an image; a project that needs another figure
 # overrides the define rather than editing this package.
-defines = ["OPENKAL_OPENSBI_HEAP_BYTES=65536"]
+#
+# The timebase is a build input because `rdtime` counts at a rate the
+# architecture does not fix. It is published in the device tree, which the entry
+# contract does not forward, so a project that runs on other hardware states it
+# here. The default is QEMU's `virt`. src/time.cpp records why this is an input
+# and what a project that leaves it wrong gets.
+defines = ["OPENKAL_OPENSBI_HEAP_BYTES=65536",
+           "OPENKAL_OPENSBI_TIMEBASE_HZ=10000000"]

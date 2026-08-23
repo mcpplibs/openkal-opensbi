@@ -7,6 +7,8 @@
 import openkal.stream;
 import openkal.abort;
 import openkal.memory;
+import openkal.time;
+import openkal.env;
 
 namespace {
 
@@ -25,9 +27,30 @@ extern "C" void kmain() {
     say(p ? "heap ok\n" : "heap exhausted\n");
     kal_free(p, 64, 16);
 
+    // ⚠️ THE ASSERTION IS THAT IT MOVES, NOT THAT IT READS.
+    //
+    // A clock that returns a constant reads perfectly well and is worthless,
+    // and it is the exact failure the comment this interface replaced was
+    // afraid of. So the sleep is between two readings and the second must
+    // exceed the first: a stuck counter fails here, and only here.
+    //
+    // The figure is a millisecond because it has to be long enough to exceed
+    // one tick of a granularity this package does not fix, and short enough
+    // that a spin of it does not matter to anyone.
+    const kal_duration t0 = kal_time_monotonic();
+    kal_time_sleep(1000000);
+    const kal_duration t1 = kal_time_monotonic();
+    say(t1 > t0 ? "clock ok\n" : "clock stuck\n");
+
+    // Empty, and that is the answer rather than a refusal — src/env.cpp records
+    // why the two are different. Asserted because "returns zero" and "was never
+    // linked" are indistinguishable without asking.
+    say(kal_env_arg_count() == 0 && kal_env_var_count() == 0
+            ? "env empty\n" : "env unexpected\n");
+
     // Reaches the host as QEMU's exit status, because SRST is a real shutdown
     // rather than a spin.
-    kal_exit(p ? 0 : 1);
+    kal_exit(p && t1 > t0 ? 0 : 1);
 }
 
 asm(".section .text.entry\n.globl _start\n_start:\n"

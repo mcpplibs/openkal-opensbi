@@ -15,6 +15,9 @@ jobs:
       MCPP_VERSION: 2026.8.20.2
       XLINGS_VERSION: v2026.8.17.2
       XLINGS_NON_INTERACTIVE: '1'
+      # The branch of the specification this backend is verified against. It
+      # moves with this one; when both are on `main` this becomes `main`.
+      OPENKAL_BRANCH: feat/openkal-closure
     steps:
       - uses: actions/checkout@v4
 
@@ -78,6 +81,59 @@ jobs:
           mcpp run 2>&1 | tee run.log
           grep -q "hello from openkal over SBI" run.log
           grep -q "heap ok" run.log
+          # ⚠️ `clock ok` is the line that distinguishes a counter that reads
+          # from a counter that MOVES. The example takes two readings with a
+          # sleep between them; a stuck clock reads fine and prints
+          # `clock stuck`. Verified to print it, by returning a constant from
+          # `kal_time_monotonic` and rerunning.
+          grep -q "clock ok" run.log
+          grep -q "env empty" run.log
+
+      # ⭐⭐ THE HALF OF CLAUSE 9 THIS BACKEND WAS NOT PERFORMING.
+      #
+      # The specification makes behavioural conformance a property of every
+      # implementation, and three of the four in this ecosystem ran the suite
+      # while this one did not. The difficulty was real and it was not that the
+      # suite needs an operating system: the suite depends on openkal and the
+      # language, does not import std, and states in its own manifest that it is
+      # written to run in a program that carries no other runtime.
+      #
+      # ⚠️ What it needed was three things this environment supplies and a
+      # hosted one does not have to, and each was found by trying:
+      #
+      #   the memory map        — now `openkal-opensbi/board.ld`, reaching the
+      #                           suite through this package's build program,
+      #                           because where firmware hands control over is a
+      #                           fact about this environment and not about any
+      #                           program that runs on it;
+      #   the hand-over         — `--features standalone`, which is how every
+      #                           implementation here performs it when no C
+      #                           library is beneath the program;
+      #   an entry symbol       — the suite's `main` is `extern "C"`, because
+      #                           `-ffreestanding` makes `main` an ordinary
+      #                           function and the startup object refers to it
+      #                           by name.
+      #
+      # ⚠️ THE ASSERTION IS ON THE OUTPUT AND ON THE EXIT STATUS BOTH. The suite
+      # exits 2 when it observed nothing, which is the outcome a selection that
+      # matched no interface would otherwise pass silently — and `core` on a
+      # machine with no operating system is exactly the selection where that
+      # could happen.
+      - name: The conformance suite runs on the machine with no operating system
+        run: |
+          set -euo pipefail
+          git clone --quiet --depth 1 -b "$OPENKAL_BRANCH" \
+            https://github.com/mcpplibs/openkal "$RUNNER_TEMP/spec"
+          Q=$(ls -d "$HOME"/.mcpp/registry/data/xpkgs/xim-x-qemu-riscv/*/bin/qemu-system-riscv64 | head -1)
+          export OPENKAL_CONFORMANCE_RUNNER="$Q -machine virt -nographic -no-reboot -bios default -kernel"
+          export OPENKAL_CONFORMANCE_IMPL_FEATURES=standalone
+          cd "$RUNNER_TEMP/spec"
+          bash tools/run-conformance.sh openkal-opensbi "$GITHUB_WORKSPACE" core \
+            --target riscv64-none-elf 2>&1 | tee conf.log
+          grep -q "the implementation conforms in every observation made" conf.log
+          # ⚠️ And that something WAS observed. "0 did not hold" is also what a
+          # run that examined nothing reports.
+          grep -qE "observations: [1-9][0-9]* held" conf.log
 
   # ---------------------------------------------------------------------------
   # The cross-compilation is performed FROM three systems, not only from Linux.
