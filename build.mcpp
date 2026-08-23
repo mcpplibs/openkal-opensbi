@@ -1,0 +1,18 @@
+import mcpp;
+
+// ⭐ THE BOARD'S MEMORY MAP, PUT ON THE CONSUMER'S LINK LINE.
+//
+// `board.ld` records where this firmware hands control over and what a program
+// started that way needs its layout to contain. Both are facts about this
+// environment rather than about any program, which is why they are here and not
+// copied into each one — see the head of that file for what the copies were.
+//
+// ⚠️ `link_script` reaches the CONSUMER's link line, and a relative path in
+// `ldflags` would resolve against the build directory instead of against this
+// package. That is the same reason `openkal-macos` supplies its stub through a
+// `link_search` rather than a path in a flag.
+int main() {
+    mcpp::link_script("board.ld");
+    mcpp::rerun_if_changed("board.ld");
+    return 0;
+}
