@@ -76,6 +76,36 @@ The region is 64 KiB by default. A project that needs another figure overrides
 allocation pattern needs reuse should place a real allocator above this one;
 that is policy, and openkal carries mechanism.
 
+## The memory map is this package's, because it is a fact about this machine
+
+`board.ld` states where the firmware hands control over (`0x80200000`, since
+OpenSBI itself occupies the start of RAM), what the layout has to contain for a
+C++ program to work — the initialiser arrays, the unwind tables and their bounds,
+the thread-local segment — and how much stack and heap the image reserves. It
+reaches a consumer's link line through this package's build program, in the same
+way its `kal_*` definitions reach the consumer's objects.
+
+A program therefore states nothing. Until 2026-08-23 every program that wanted to
+run here carried a copy: `examples/hello` had one, the C++ runtime's
+`same-source` example had a second, and the specification's conformance suite
+would have needed a third. None of those is a property of a program.
+
+⚠️ **A program that states one as well states it twice.** The fact reaches
+consumers transitively, and two linker scripts are both applied — which fails as
+overlapping output sections and says nothing about there being two:
+
+```
+ld.lld: error: section .eh_frame file range overlaps with .debug_str_offsets
+```
+
+The sizes — 256 KiB of stack, 16 MiB of heap — are generous rather than minimal,
+and that is the one judgement in the file. A C program printing a string needs
+neither; a program carrying a C library and a C++ standard library does, and it
+exhausts smaller figures during its own initialisation, before `main`, so what it
+looks like is a program that starts and prints nothing. Both regions lie past the
+end of the image and cost nothing in it. A board with far less memory states its
+own map instead of taking this one.
+
 ## Two details that were measured rather than assumed
 
 **DBCN is probed, not assumed.** The Debug Console extension arrived in SBI
@@ -99,7 +129,12 @@ heap ok
 ```
 
 The image carries no C library (`[target.<triple>].sysroot = ""`) and no board
-package. It is loaded at `0x80200000`, because OpenSBI itself occupies the start
-of RAM.
+package, and it states no memory map of its own: `board.ld` above is this
+package's.
+
+The specification's conformance suite also runs here, under the same firmware,
+selected to the `core` set — twelve observations held, none failed. Clause 9
+makes the behavioural half a property of every implementation, and an
+implementation of a machine with no operating system is not exempt from it.
 
 [kal]: https://github.com/mcpplibs/openkal
