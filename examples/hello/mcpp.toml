@@ -13,5 +13,5 @@ runner  = ["qemu-system-riscv64", "-machine", "virt", "-nographic",
            "-no-reboot", "-bios", "default", "-kernel"]
 
 [dependencies]
-openkal         = { git = "https://github.com/mcpplibs/openkal", branch = "feat/openkal-closure" }
+openkal = "0.6.0"
 openkal-opensbi = { path = "../.." }
