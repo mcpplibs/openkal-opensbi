@@ -236,32 +236,34 @@ void* kal_alloc(kal_uintptr size, kal_uintptr align) {
 // rather than an omission.
 void kal_free(void*, kal_uintptr, kal_uintptr) {}
 
-// ── Capability words for the layers this machine does not have ──────────────
+// ── The interfaces this machine does not have are absent, and stay absent ───
 //
-// ⚠️ A BACKEND MUST DEFINE EVERY PROPERTY WORD, INCLUDING THE ONES THAT READ
-// ZERO, OR THE QUESTION ITSELF FAILS TO LINK.
+// ⚠️ NO `kal_fs_props`, NO `kal_task_props`, AND THAT IS THE MECHANISM RATHER
+// THAN AN OMISSION.
 //
-// The specification's queries are inline functions over these objects:
-//
-//     inline props properties() { return props{kal_fs_props}; }
-//
-// so a program that merely ASKS whether a filesystem exists takes the address
-// of `kal_fs_props`. Leaving it undefined on a machine that has no filesystem
-// makes the question unanswerable in the strongest sense: it does not link.
+// 0.1.3 defined both as zero, because a capability-querying program failed to
+// link against this backend:
 //
 //     ld.lld: error: undefined symbol: kal_fs_props
 //     >>> referenced by fs.cppm:136
 //     >>>               obj/main.o:(kal::fs::properties@openkal.fs())
 //
-// Measured while porting a capability-querying program to this backend. The
-// program contained no filesystem call at all — the reference came from the
-// query, which is the pattern the whole specification is built on.
+// That error is clause 6.1 working. "An interface that an implementation does
+// not provide is absent as a link-time definition, and a consumer that uses it
+// fails to link." Clause 6.2's table is explicit about which question each
+// mechanism answers: the LINKER answers "was an interface used that the
+// implementation does not provide", and a capability word answers "how does
+// this implementation behave WITHIN AN INTERFACE IT PROVIDES".
 //
-// Zero is the correct value and is already the specified reading: "an
-// unassigned position reads as zero, so that a program compiled against a later
-// specification behaves correctly against an earlier implementation". A machine
-// with no filesystem and no scheduler is that case taken to its limit.
-const kal_uintptr kal_fs_props   = 0;
-const kal_uintptr kal_task_props = 0;
-
+// Defining the word for an interface with no operations answers the second
+// question about something that cannot be asked the first. The program then
+// proceeds past the point the linker existed to stop it at, and reaches
+// `kal_fs_open` — undefined — or worse, believes it has a filesystem with no
+// capabilities. SURFACE.txt says the same thing in the other direction: an
+// implementation "exports the names of the interfaces it provides and exports
+// no other name beginning with kal_".
+//
+// 0.1.3 is retracted. A program that asks this backend about a filesystem is a
+// program that should not build against this backend, and the graph is where
+// that is decided.
 }  // extern "C"
