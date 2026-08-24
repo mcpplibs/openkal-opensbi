@@ -17,7 +17,12 @@ jobs:
       XLINGS_NON_INTERACTIVE: '1'
       # The branch of the specification this backend is verified against. It
       # moves with this one; when both are on `main` this becomes `main`.
-      OPENKAL_BRANCH: feat/openkal-closure
+      # The specification is taken from the branch of the same name where
+      # one exists, so a change spanning both repositories is tested as a
+      # whole. It was a fixed branch name until 2026-08-25 --- one merged
+      # long before, so every run since had been cloning a stale tree and
+      # reporting on it.
+      OPENKAL_BRANCH: ${{ github.head_ref || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -122,8 +127,14 @@ jobs:
       - name: The conformance suite runs on the machine with no operating system
         run: |
           set -euo pipefail
-          git clone --quiet --depth 1 -b "$OPENKAL_BRANCH" \
-            https://github.com/mcpplibs/openkal "$RUNNER_TEMP/spec"
+          git clone --quiet https://github.com/mcpplibs/openkal "$RUNNER_TEMP/spec"
+          if git -C "$RUNNER_TEMP/spec" rev-parse --verify --quiet \
+               "origin/$OPENKAL_BRANCH" > /dev/null; then
+            git -C "$RUNNER_TEMP/spec" checkout --quiet "origin/$OPENKAL_BRANCH"
+            echo "the specification is at $OPENKAL_BRANCH"
+          else
+            echo "the specification has no $OPENKAL_BRANCH; its default branch is used"
+          fi
           Q=$(ls -d "$HOME"/.mcpp/registry/data/xpkgs/xim-x-qemu-riscv/*/bin/qemu-system-riscv64 | head -1)
           export OPENKAL_CONFORMANCE_RUNNER="$Q -machine virt -nographic -no-reboot -bios default -kernel"
           export OPENKAL_CONFORMANCE_IMPL_FEATURES=standalone
