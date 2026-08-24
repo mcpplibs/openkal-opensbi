@@ -13,5 +13,5 @@ runner  = ["qemu-system-riscv64", "-machine", "virt", "-nographic",
            "-no-reboot", "-bios", "default", "-kernel"]
 
 [dependencies]
-openkal = "0.6.0"
+openkal = "0.7.0"
 openkal-opensbi = { path = "../.." }
