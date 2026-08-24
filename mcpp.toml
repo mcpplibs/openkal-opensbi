@@ -14,7 +14,7 @@
 [package]
 namespace   = "mcpplibs"
 name        = "openkal-opensbi"
-version     = "0.1.4"
+version     = "0.1.5"
 description = "An implementation of openkal on the RISC-V Supervisor Binary Interface, portable across every machine whose firmware provides one"
 license     = "Apache-2.0"
 
