@@ -236,4 +236,32 @@ void* kal_alloc(kal_uintptr size, kal_uintptr align) {
 // rather than an omission.
 void kal_free(void*, kal_uintptr, kal_uintptr) {}
 
+// ── Capability words for the layers this machine does not have ──────────────
+//
+// ⚠️ A BACKEND MUST DEFINE EVERY PROPERTY WORD, INCLUDING THE ONES THAT READ
+// ZERO, OR THE QUESTION ITSELF FAILS TO LINK.
+//
+// The specification's queries are inline functions over these objects:
+//
+//     inline props properties() { return props{kal_fs_props}; }
+//
+// so a program that merely ASKS whether a filesystem exists takes the address
+// of `kal_fs_props`. Leaving it undefined on a machine that has no filesystem
+// makes the question unanswerable in the strongest sense: it does not link.
+//
+//     ld.lld: error: undefined symbol: kal_fs_props
+//     >>> referenced by fs.cppm:136
+//     >>>               obj/main.o:(kal::fs::properties@openkal.fs())
+//
+// Measured while porting a capability-querying program to this backend. The
+// program contained no filesystem call at all — the reference came from the
+// query, which is the pattern the whole specification is built on.
+//
+// Zero is the correct value and is already the specified reading: "an
+// unassigned position reads as zero, so that a program compiled against a later
+// specification behaves correctly against an earlier implementation". A machine
+// with no filesystem and no scheduler is that case taken to its limit.
+const kal_uintptr kal_fs_props   = 0;
+const kal_uintptr kal_task_props = 0;
+
 }  // extern "C"
