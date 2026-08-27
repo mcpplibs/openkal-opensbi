@@ -31,6 +31,19 @@ scheduler, and clause 6.2 says the remedy for an operation that cannot be
 provided is that its absence be expressed by its absence rather than by a
 run-time refusal.
 
+The five interfaces version 0.8 adds are absent for the same reason and by the
+same rule. This machine has no network, so `net` and `datagram` are not provided.
+It has no memory management unit to copy an address space with, so `space` is
+not. It has no second execution context to bound a wait against, so `timeout` is
+not: an operation here either completes or does not, and a bound upon it would
+report an expiry that could never occur. `terminal` is absent because the console
+is a serial line whose settings this firmware does not expose; a stream is
+reported as interactive and nothing acts upon that fact.
+
+None of the five is a deviation. Clause 6.1 makes an interface an implementation
+does not provide absent at the link, so a program requiring one is refused when
+it is built rather than when it runs.
+
 ⚠️ **`time` used to be on that list, with a reason, and the reason was wrong.**
 
 It read: SBI can arm a timer interrupt, which is a mechanism for a kernel rather
