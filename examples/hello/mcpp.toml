@@ -13,5 +13,15 @@ runner  = ["qemu-system-riscv64", "-machine", "virt", "-nographic",
            "-no-reboot", "-bios", "default", "-kernel"]
 
 [dependencies]
-openkal = "0.7.0"
+# ⚠️ THE FORM MUST MATCH THE ONE THE IMPLEMENTATION USES, not merely the
+# version. mcpp refuses a graph in which one package reaches a dependency by
+# version and another by git:
+#
+#     dependency 'mcpplibs.openkal' is requested as both a version dep
+#     (by 'hello') and a git dep (by 'mcpplibs.openkal-opensbi@path').
+#
+# That is the right refusal --- two forms can name two different trees --- and
+# it means an example inside a repository follows that repository's own
+# declaration while a change is in flight.
+openkal = "0.8.0"
 openkal-opensbi = { path = "../.." }
