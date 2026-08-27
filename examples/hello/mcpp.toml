@@ -23,5 +23,5 @@ runner  = ["qemu-system-riscv64", "-machine", "virt", "-nographic",
 # That is the right refusal --- two forms can name two different trees --- and
 # it means an example inside a repository follows that repository's own
 # declaration while a change is in flight.
-openkal = { git = "https://github.com/mcpplibs/openkal", branch = "feat/openkal-0.8" }
+openkal = "0.8.0"
 openkal-opensbi = { path = "../.." }
