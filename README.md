@@ -5,7 +5,7 @@ An implementation of [openkal][kal] on the RISC-V Supervisor Binary Interface.
 ```toml
 [dependencies]
 openkal         = "0.5.1"
-openkal-opensbi = "0.1.0"
+openkal-opensbi = "0.3.0"
 ```
 
 ## ⭐ The portable RISC-V backend, as distinct from a board's own
