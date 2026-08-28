@@ -35,26 +35,28 @@
 
 extern "C" {
 
+// A machine started by firmware receives no arguments and no named values, and
+// the interface is provided rather than withheld: the answer "there are none"
+// is an answer, and a program that asks is answered rather than failing to link.
+//
+// Each of these copies into the caller's buffer and reports the length the value
+// has. Here there is no value, so each reports the condition --- which is what
+// distinguishes "there is no such thing" from "there is one and it is empty",
+// and is the distinction the interface exists to preserve.
 kal_uintptr kal_env_arg_count(void) { return 0; }
 
-const char* kal_env_arg(kal_uintptr, kal_uintptr* len) {
-    if (len) *len = 0;
-    return nullptr;
+kal_intptr kal_env_arg(kal_uintptr, char*, kal_uintptr) {
+    return -kal_err_not_found;
 }
 
 kal_uintptr kal_env_var_count(void) { return 0; }
 
-const char* kal_env_var(const char*, kal_uintptr, kal_uintptr* value_len) {
-    if (value_len) *value_len = 0;
-    return nullptr;
+kal_intptr kal_env_var(const char*, kal_uintptr, char*, kal_uintptr) {
+    return -kal_err_not_found;
 }
 
-const char* kal_env_var_at(kal_uintptr, kal_uintptr* name_len,
-                           const char** value, kal_uintptr* value_len) {
-    if (name_len)  *name_len  = 0;
-    if (value)     *value     = nullptr;
-    if (value_len) *value_len = 0;
-    return nullptr;
+kal_intptr kal_env_var_at(kal_uintptr, char*, kal_uintptr) {
+    return -kal_err_not_found;
 }
 
 }  // extern "C"
