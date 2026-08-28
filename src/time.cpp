@@ -124,6 +124,6 @@ void kal_time_sleep(kal_duration ns) {
     while (ticks() < deadline) {}
 }
 
-const kal_uintptr kal_time_props = KAL_TIME_PROP_SLEEP_PRECISE;
+kal_uintptr kal_time_props(void) { return KAL_TIME_PROP_SLEEP_PRECISE; }
 
 }  // extern "C"

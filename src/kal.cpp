@@ -65,8 +65,8 @@ bool dbcn_available() {
     return g_dbcn == 1;
 }
 
-kal_io_result write_all(const unsigned char* p, kal_uintptr n) {
-    if (n == 0) return kal_io_result{0, kal_ok};
+kal_intptr write_all(const unsigned char* p, kal_uintptr n) {
+    if (n == 0) return 0;
 
     if (dbcn_available()) {
         // The buffer is passed by physical address split into low and high
@@ -76,21 +76,24 @@ kal_io_result write_all(const unsigned char* p, kal_uintptr n) {
         while (done < n) {
             auto r = sbi_call(SBI_EXT_DBCN, SBI_DBCN_WRITE,
                               n - done, reinterpret_cast<kal_uintptr>(p + done), 0);
-            if (r.error != SBI_SUCCESS) return kal_io_result{done, kal_err_io};
+            if (r.error != SBI_SUCCESS)
+                return done ? static_cast<kal_intptr>(done) : -kal_err_io;
             // A short write is legal here and is why the loop exists; openkal
             // requires the whole buffer or a report, so the retry is the
             // implementation's job rather than every caller's.
-            if (r.value <= 0) return kal_io_result{done, kal_err_io};
+            if (r.value <= 0)
+                return done ? static_cast<kal_intptr>(done) : -kal_err_io;
             done += static_cast<kal_uintptr>(r.value);
         }
-        return kal_io_result{done, kal_ok};
+        return static_cast<kal_intptr>(done);
     }
 
     for (kal_uintptr i = 0; i < n; ++i) {
         auto r = sbi_call(SBI_EXT_LEGACY_PUTCHAR, 0, p[i], 0, 0);
-        if (r.error != SBI_SUCCESS) return kal_io_result{i, kal_err_io};
+        if (r.error != SBI_SUCCESS)
+            return i ? static_cast<kal_intptr>(i) : -kal_err_io;
     }
-    return kal_io_result{n, kal_ok};
+    return static_cast<kal_intptr>(n);
 }
 
 // ── The heap ────────────────────────────────────────────────────────────────
@@ -178,30 +181,29 @@ kal_stream kal_stdin (void) { return kal_stream{kStdin};  }
 kal_stream kal_stdout(void) { return kal_stream{kStdout}; }
 kal_stream kal_stderr(void) { return kal_stream{kStderr}; }
 
-kal_io_result kal_stream_write(kal_stream s, const void* buf, kal_uintptr n) {
-    if (s.h != kStdout && s.h != kStderr)
-        return kal_io_result{0, kal_err_invalid};
+kal_intptr kal_stream_write(kal_stream s, const void* buf, kal_uintptr n) {
+    if (s.h != kStdout && s.h != kStderr) return -kal_err_invalid;
     // ⚠️ Both streams reach the same console. SBI has one, and reporting two
     // that are secretly one would be a claim the firmware cannot honour.
     return write_all(static_cast<const unsigned char*>(buf), n);
 }
 
-kal_io_result kal_stream_read(kal_stream s, void* buf, kal_uintptr n) {
-    if (s.h != kStdin) return kal_io_result{0, kal_err_invalid};
-    if (n == 0) return kal_io_result{0, kal_ok};
+kal_intptr kal_stream_read(kal_stream s, void* buf, kal_uintptr n) {
+    if (s.h != kStdin) return -kal_err_invalid;
+    if (n == 0) return 0;
     auto* out = static_cast<unsigned char*>(buf);
     if (dbcn_available()) {
         auto r = sbi_call(SBI_EXT_DBCN, SBI_DBCN_READ,
                           n, reinterpret_cast<kal_uintptr>(out), 0);
-        if (r.error != SBI_SUCCESS) return kal_io_result{0, kal_err_io};
-        return kal_io_result{static_cast<kal_uintptr>(r.value), kal_ok};
+        if (r.error != SBI_SUCCESS) return -kal_err_io;
+        return static_cast<kal_intptr>(r.value);
     }
     auto r = sbi_call(SBI_EXT_LEGACY_GETCHAR, 0, 0, 0, 0);
     // The legacy extension reports "nothing available" as a negative value,
     // which is end of input as far as a reader is concerned.
-    if (r.error < 0) return kal_io_result{0, kal_ok};
+    if (r.error < 0) return 0;
     out[0] = static_cast<unsigned char>(r.error);
-    return kal_io_result{1, kal_ok};
+    return 1;
 }
 
 // The firmware console is not buffered by this implementation, so there is
@@ -220,6 +222,16 @@ kal_uintptr kal_stream_props(kal_stream s) {
 }
 
 // ── openkal.memory ──────────────────────────────────────────────────────────
+// The quantum this environment allocates and protects memory in.
+//
+// ONE, AND THAT IS AN ANSWER RATHER THAN AN ABSENCE. This machine has no
+// memory management unit in this arrangement: memory is a fixed region and the
+// allocator hands out any alignment a caller asks for, so every address and
+// every length is acceptable. A caller that rounds to one is correct, which is
+// what the operation promises. Reporting a page size the firmware does not
+// enforce would be reporting a fact about some other machine.
+kal_uintptr kal_memory_granularity(void) { return 1; }
+
 void* kal_alloc(kal_uintptr size, kal_uintptr align) {
     if (size == 0) size = 1;
     if (align == 0) align = 1;
