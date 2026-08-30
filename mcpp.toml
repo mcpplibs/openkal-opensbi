@@ -33,7 +33,7 @@ repo        = "https://github.com/mcpplibs/openkal-opensbi"
 # The contract, not an implementation of it. Declaring it turns a version
 # mismatch into a resolution-time message rather than a link-time one.
 [dependencies]
-openkal = "0.9.0"
+openkal = "0.10.0"
 
 # ⭐ WHAT RECEIVES CONTROL, WHICH IS A STATEMENT ABOUT THE PROGRAM.
 #
