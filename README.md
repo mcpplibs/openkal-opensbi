@@ -4,11 +4,11 @@ An implementation of [openkal][kal] on the RISC-V Supervisor Binary Interface.
 
 ```toml
 [dependencies]
-openkal         = "0.9.0"
-openkal-opensbi = "0.3.0"
+openkal         = "0.13.0"
+openkal-opensbi = "0.7.0"
 ```
 
-## ⭐ The portable RISC-V backend, as distinct from a board's own
+## The portable RISC-V backend, as distinct from a board's own
 
 A board-supplied backend writes to a device address, and that address is a board
 fact. The same binary on a second RISC-V machine writes to something that is not
@@ -44,7 +44,7 @@ None of the five is a deviation. Clause 6.1 makes an interface an implementation
 does not provide absent at the link, so a program requiring one is refused when
 it is built rather than when it runs.
 
-⚠️ **`time` used to be on that list, with a reason, and the reason was wrong.**
+**`time` used to be on that list, with a reason, and the reason was wrong.**
 
 It read: SBI can arm a timer interrupt, which is a mechanism for a kernel rather
 than a clock a program can read. The first half is true. The second does not
@@ -60,7 +60,7 @@ kernel beneath:
 t0=333572 t1=381292  ADVANCES
 ```
 
-⭐ The conclusion got rechecked and the reason beside it did not. The two
+The conclusion got rechecked and the reason beside it did not. The two
 minutes that refuted it had been available for as long as the file existed.
 
 `time` is therefore provided: a monotonic count, an exact granularity, and a
@@ -103,7 +103,7 @@ run here carried a copy: `examples/hello` had one, the C++ runtime's
 `same-source` example had a second, and the specification's conformance suite
 would have needed a third. None of those is a property of a program.
 
-⚠️ **A program that states one as well states it twice.** The fact reaches
+**A program that states one as well states it twice.** The fact reaches
 consumers transitively, and two linker scripts are both applied — which fails as
 overlapping output sections and says nothing about there being two:
 
@@ -126,7 +126,7 @@ v2.0, and older firmware answers `SBI_ERR_NOT_SUPPORTED` — on which every writ
 would silently transfer nothing. The legacy one-character extension is the
 fallback.
 
-⚠️ **No function-local `static`.** A guarded local static compiles to
+**No function-local `static`.** A guarded local static compiles to
 `__cxa_guard_acquire`/`__cxa_guard_release`, which a freestanding target has no
 runtime to supply. Measured: the link fails naming both. `-fno-threadsafe-statics`
 would also silence it, but a flag that has to be remembered is weaker than a

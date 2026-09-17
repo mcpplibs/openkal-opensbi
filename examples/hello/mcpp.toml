@@ -13,7 +13,7 @@ runner  = ["qemu-system-riscv64", "-machine", "virt", "-nographic",
            "-no-reboot", "-bios", "default", "-kernel"]
 
 [dependencies]
-# ⚠️ THE FORM MUST MATCH THE ONE THE IMPLEMENTATION USES, not merely the
+# THE FORM MUST MATCH THE ONE THE IMPLEMENTATION USES, not merely the
 # version. mcpp refuses a graph in which one package reaches a dependency by
 # version and another by git:
 #

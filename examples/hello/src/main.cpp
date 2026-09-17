@@ -1,6 +1,6 @@
 // openkal over SBI, with no C library and no board package beneath it.
 //
-// ⚠️ The entry point is `_start` and not `main`: nothing here supplies a C
+// The entry point is `_start` and not `main`: nothing here supplies a C
 // runtime, so there is no crt0 to call one. OpenSBI hands control to the image
 // at its load address in supervisor mode with a stack that the linker script
 // below establishes.
@@ -27,7 +27,7 @@ extern "C" void kmain() {
     say(p ? "heap ok\n" : "heap exhausted\n");
     kal_free(p, 64, 16);
 
-    // ⚠️ THE ASSERTION IS THAT IT MOVES, NOT THAT IT READS.
+    // THE ASSERTION IS THAT IT MOVES, NOT THAT IT READS.
     //
     // A clock that returns a constant reads perfectly well and is worthless,
     // and it is the exact failure the comment this interface replaced was

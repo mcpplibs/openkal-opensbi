@@ -41,7 +41,7 @@ jobs:
 
       - name: Install mcpp
         run: |
-          # ⚠️ A LOOP, BECAUSE ONE `xlings update` CAN RETURN A STALE INDEX
+          # A LOOP, BECAUSE ONE `xlings update` CAN RETURN A STALE INDEX
           # WITHOUT SAYING SO.
           #
           # The index is published as an artifact behind a pointer, and that
@@ -62,7 +62,7 @@ jobs:
           # of the two situations it is.
           for attempt in 1 2 3 4 5 6; do
             xlings update > /dev/null 2>&1 || true
-            if # ⚠️ THE PIN MAY NAME THE RELEASE THIS RUN IS VALIDATING, which does
+            if # THE PIN MAY NAME THE RELEASE THIS RUN IS VALIDATING, which does
           # not exist yet — that is the whole point of MCPP_SOURCE_REF. Bootstrap
           # from whatever the index has; the step below replaces it with the
           # build under review, and the pin is what an ordinary run tests.
@@ -78,7 +78,7 @@ jobs:
             echo "the index has not caught up yet (attempt $attempt of 6); waiting 60s"
             sleep 60
           done
-          # ⚠️⚠️ TRANSITION: GIVE THE BOOTSTRAP THE glibc ITS BINDING NAMES.
+          # TRANSITION: GIVE THE BOOTSTRAP THE glibc ITS BINDING NAMES.
           #
           # `xim:glibc`'s `latest` moved from `2.44` to `2.44.2`. A payload
           # directory is named after the version a request RESOLVED to, while a
@@ -90,13 +90,13 @@ jobs:
           #     error: selected RuntimeBinding glibc@2.44 requires payload
           #            '…/xpkgs/xim-x-glibc/2.44', but it is not installed
           #
-          # ⚠️ On every NEW machine and on none that already existed, which is why
+          # On every NEW machine and on none that already existed, which is why
           # it is invisible from a developer's own. Measured on `main` as readily
           # as on any branch — the index records the same failure verbatim in
           # `pkgs/g/glibc.lua` and states the rule it broke: "The index is DATA
           # and the client is a PROGRAM: the consumer ships first."
           #
-          # ⭐ REMOVE THIS once a released mcpp resolves it. `mcpp 2026.8.27.1`
+          # REMOVE THIS once a released mcpp resolves it. `mcpp 2026.8.27.1`
           # accepts an installed payload whose version REFINES the requested one
           # (`payload_dir_for_version`), so a bootstrap from it needs nothing
           # here. Until then the missing payload is simply installed.
@@ -108,13 +108,13 @@ jobs:
           fi
           mcpp --version
           mcpp self config --mirror GLOBAL
-          # ⭐⭐ CROSS-VALIDATION: BUILD THE mcpp UNDER REVIEW AND USE THAT ONE.
+          # CROSS-VALIDATION: BUILD THE mcpp UNDER REVIEW AND USE THAT ONE.
           #
           # Empty in the ordinary run, so this job keeps testing the RELEASED
           # mcpp the pin above names. Set it — `workflow_dispatch` input, or the
           # repository variable — and the same job runs against that source.
           #
-          # ⚠️ THIS EXISTS BECAUSE THE ORDER USED TO BE WRONG. Several mcpp
+          # THIS EXISTS BECAUSE THE ORDER USED TO BE WRONG. Several mcpp
           # releases went out green and only then turned this ecosystem red: the
           # engine's own CI cannot see a defect that appears only in a real
           # dependency graph, and this repository could not see the engine until
@@ -127,7 +127,7 @@ jobs:
             [ -d "$src" ] || git clone --quiet --depth 1 \
               --branch "$MCPP_SOURCE_REF" \
               https://github.com/mcpp-community/mcpp.git "$src"
-            # ⚠️ THE CLONE'S OWN WORKSPACE PIN MUST NOT DECIDE WHICH mcpp
+            # THE CLONE'S OWN WORKSPACE PIN MUST NOT DECIDE WHICH mcpp
             # BUILDS IT. `.xlings.json` at mcpp's root pins the mcpp that
             # compiles mcpp, and that pin does not move when mcpp is released —
             # so a build inside the checkout obeys it and tries to install a
@@ -140,7 +140,7 @@ jobs:
             # above, which is exactly what removing the file leaves.
             rm -f "$src/.xlings.json"
             ( cd "$src" && mcpp build --release )
-            # ⚠️ BOTH SPELLINGS, AND NO `-perm`. The matrix reaches Windows and
+            # BOTH SPELLINGS, AND NO `-perm`. The matrix reaches Windows and
             # macOS runners too: on Windows the artefact is `mcpp.exe`, and
             # `-perm -u+x` is not a question that filesystem answers the way this
             # expects. Measured: `Finished release [optimized] in 173.44s`
@@ -154,13 +154,13 @@ jobs:
                     \( -name mcpp -o -name mcpp.exe \) | head -1)
             [ -n "$built" ] || { echo "::error::mcpp did not build from $MCPP_SOURCE_REF"; exit 1; }
             echo "$(cd "$(dirname "$built")" && pwd)" >> "$GITHUB_PATH"
-            # ⚠️ Reported, because a PATH entry that does not win looks exactly
+            # Reported, because a PATH entry that does not win looks exactly
             # like one that does until something built with the wrong engine.
             echo "under review: $("$built" --version)  (from $MCPP_SOURCE_REF)"
           fi
 
 
-      # ⚠️⚠️ A JOB THAT RESOLVES THE PUBLISHED SPECIFICATION CANNOT REVIEW A
+      # A JOB THAT RESOLVES THE PUBLISHED SPECIFICATION CANNOT REVIEW A
       # CHANGE TO ONE.
       #
       # Another step in this file already clones the specification and
@@ -172,7 +172,7 @@ jobs:
       #     synced index ... the index is current, so this name is either
       #     wrong or not published yet
       #
-      # ⭐⭐ THE UNIT IS THE JOB, NOT THE REPOSITORY. Measured 2026-08-28 across
+      # THE UNIT IS THE JOB, NOT THE REPOSITORY. Measured 2026-08-28 across
       # the eight repositories of this ecosystem while one change spanned all of
       # them: seven jobs in three repositories had this shape, and every one of
       # those repositories ALSO had a job that substituted correctly --- which is
@@ -192,11 +192,11 @@ jobs:
           else
             echo "the specification has no $OPENKAL_BRANCH; its default branch is used"
           fi
-          # ⚠️ EVERY MANIFEST THAT NAMES IT, AND BY THE SAME FORM. mcpp refuses
+          # EVERY MANIFEST THAT NAMES IT, AND BY THE SAME FORM. mcpp refuses
           # a graph in which one package reaches a dependency by version and
           # another by path, so substituting only the root leaves the build
           # refusing for a second reason instead of the first.
-          # ⚠️ NOT `sed -i'. This step runs on macOS and on Windows too, and
+          # NOT `sed -i'. This step runs on macOS and on Windows too, and
           # BSD sed requires an argument to -i that GNU sed refuses. A temporary
           # file is the spelling that holds on all three.
           subst() {   # subst <file> <relative-path-to-the-specification>
@@ -214,7 +214,7 @@ jobs:
           xlings install xim:qemu-riscv -y
           XLINGS_HOME="$HOME/.mcpp/registry" xlings install xim:qemu-riscv -y
 
-      # ⚠️ The assertion is on the OUTPUT, not on the exit status. A firmware
+      # The assertion is on the OUTPUT, not on the exit status. A firmware
       # that never reaches the payload exits zero, and so does a payload whose
       # console writes go nowhere — which is precisely the failure this backend
       # exists to avoid on a second machine.
@@ -227,7 +227,7 @@ jobs:
           mcpp run 2>&1 | tee run.log
           grep -q "hello from openkal over SBI" run.log
           grep -q "heap ok" run.log
-          # ⚠️ `clock ok` is the line that distinguishes a counter that reads
+          # `clock ok` is the line that distinguishes a counter that reads
           # from a counter that MOVES. The example takes two readings with a
           # sleep between them; a stuck clock reads fine and prints
           # `clock stuck`. Verified to print it, by returning a constant from
@@ -235,7 +235,7 @@ jobs:
           grep -q "clock ok" run.log
           grep -q "env empty" run.log
 
-      # ⭐⭐ THE HALF OF CLAUSE 9 THIS BACKEND WAS NOT PERFORMING.
+      # THE HALF OF CLAUSE 9 THIS BACKEND WAS NOT PERFORMING.
       #
       # The specification makes behavioural conformance a property of every
       # implementation, and three of the four in this ecosystem ran the suite
@@ -244,7 +244,7 @@ jobs:
       # language, does not import std, and states in its own manifest that it is
       # written to run in a program that carries no other runtime.
       #
-      # ⚠️ What it needed was three things this environment supplies and a
+      # What it needed was three things this environment supplies and a
       # hosted one does not have to, and each was found by trying:
       #
       #   the memory map        — now `openkal-opensbi/board.ld`, reaching the
@@ -260,7 +260,7 @@ jobs:
       #                           function and the startup object refers to it
       #                           by name.
       #
-      # ⚠️ THE ASSERTION IS ON THE OUTPUT AND ON THE EXIT STATUS BOTH. The suite
+      # THE ASSERTION IS ON THE OUTPUT AND ON THE EXIT STATUS BOTH. The suite
       # exits 2 when it observed nothing, which is the outcome a selection that
       # matched no interface would otherwise pass silently — and `core` on a
       # machine with no operating system is exactly the selection where that
@@ -283,7 +283,7 @@ jobs:
           bash tools/run-conformance.sh openkal-opensbi "$GITHUB_WORKSPACE" core \
             --target riscv64-none-elf 2>&1 | tee conf.log
           grep -q "the implementation conforms in every observation made" conf.log
-          # ⚠️ And that something WAS observed. "0 did not hold" is also what a
+          # And that something WAS observed. "0 did not hold" is also what a
           # run that examined nothing reports.
           grep -qE "observations: [1-9][0-9]* held" conf.log
 
@@ -296,7 +296,7 @@ jobs:
   # A package that has only ever been built from Linux is a package whose
   # consumers must use Linux, and nothing in these sources says so.
   #
-  # ⚠️ A TOOLCHAIN AXIS IS ABSENT HERE, AND THAT IS MEASURED RATHER THAN
+  # A TOOLCHAIN AXIS IS ABSENT HERE, AND THAT IS MEASURED RATHER THAN
   # ASSUMED. The row for a bare-metal triple names its compiler, and the
   # command-line override does not displace it: `--toolchain gcc@16.1.0` on a
   # `riscv64-none-elf` build resolves llvm@22.1.8 regardless. A matrix over
@@ -305,7 +305,7 @@ jobs:
   # choice is real — openkal, whose declarations are compiled by three families
   # on three systems.
   #
-  # ⚠️ BUILD ONLY, AND DELIBERATELY. Behaviour is asserted once, above, under an
+  # BUILD ONLY, AND DELIBERATELY. Behaviour is asserted once, above, under an
   # emulator. Booting the same image from three systems would be a statement
   # about the emulator rather than about this package, and "the image does what
   # the README says" does not become more true for having been observed from
@@ -349,7 +349,7 @@ jobs:
 
       - name: Install mcpp
         run: |
-          # ⚠️ A LOOP, BECAUSE ONE `xlings update` CAN RETURN A STALE INDEX
+          # A LOOP, BECAUSE ONE `xlings update` CAN RETURN A STALE INDEX
           # WITHOUT SAYING SO.
           #
           # The index is published as an artifact behind a pointer, and that
@@ -370,7 +370,7 @@ jobs:
           # of the two situations it is.
           for attempt in 1 2 3 4 5 6; do
             xlings update > /dev/null 2>&1 || true
-            if # ⚠️ THE PIN MAY NAME THE RELEASE THIS RUN IS VALIDATING, which does
+            if # THE PIN MAY NAME THE RELEASE THIS RUN IS VALIDATING, which does
           # not exist yet — that is the whole point of MCPP_SOURCE_REF. Bootstrap
           # from whatever the index has; the step below replaces it with the
           # build under review, and the pin is what an ordinary run tests.
@@ -386,7 +386,7 @@ jobs:
             echo "the index has not caught up yet (attempt $attempt of 6); waiting 60s"
             sleep 60
           done
-          # ⚠️⚠️ TRANSITION: GIVE THE BOOTSTRAP THE glibc ITS BINDING NAMES.
+          # TRANSITION: GIVE THE BOOTSTRAP THE glibc ITS BINDING NAMES.
           #
           # `xim:glibc`'s `latest` moved from `2.44` to `2.44.2`. A payload
           # directory is named after the version a request RESOLVED to, while a
@@ -398,13 +398,13 @@ jobs:
           #     error: selected RuntimeBinding glibc@2.44 requires payload
           #            '…/xpkgs/xim-x-glibc/2.44', but it is not installed
           #
-          # ⚠️ On every NEW machine and on none that already existed, which is why
+          # On every NEW machine and on none that already existed, which is why
           # it is invisible from a developer's own. Measured on `main` as readily
           # as on any branch — the index records the same failure verbatim in
           # `pkgs/g/glibc.lua` and states the rule it broke: "The index is DATA
           # and the client is a PROGRAM: the consumer ships first."
           #
-          # ⭐ REMOVE THIS once a released mcpp resolves it. `mcpp 2026.8.27.1`
+          # REMOVE THIS once a released mcpp resolves it. `mcpp 2026.8.27.1`
           # accepts an installed payload whose version REFINES the requested one
           # (`payload_dir_for_version`), so a bootstrap from it needs nothing
           # here. Until then the missing payload is simply installed.
@@ -416,13 +416,13 @@ jobs:
           fi
           mcpp --version
           mcpp self config --mirror GLOBAL
-          # ⭐⭐ CROSS-VALIDATION: BUILD THE mcpp UNDER REVIEW AND USE THAT ONE.
+          # CROSS-VALIDATION: BUILD THE mcpp UNDER REVIEW AND USE THAT ONE.
           #
           # Empty in the ordinary run, so this job keeps testing the RELEASED
           # mcpp the pin above names. Set it — `workflow_dispatch` input, or the
           # repository variable — and the same job runs against that source.
           #
-          # ⚠️ THIS EXISTS BECAUSE THE ORDER USED TO BE WRONG. Several mcpp
+          # THIS EXISTS BECAUSE THE ORDER USED TO BE WRONG. Several mcpp
           # releases went out green and only then turned this ecosystem red: the
           # engine's own CI cannot see a defect that appears only in a real
           # dependency graph, and this repository could not see the engine until
@@ -435,7 +435,7 @@ jobs:
             [ -d "$src" ] || git clone --quiet --depth 1 \
               --branch "$MCPP_SOURCE_REF" \
               https://github.com/mcpp-community/mcpp.git "$src"
-            # ⚠️ THE CLONE'S OWN WORKSPACE PIN MUST NOT DECIDE WHICH mcpp
+            # THE CLONE'S OWN WORKSPACE PIN MUST NOT DECIDE WHICH mcpp
             # BUILDS IT. `.xlings.json` at mcpp's root pins the mcpp that
             # compiles mcpp, and that pin does not move when mcpp is released —
             # so a build inside the checkout obeys it and tries to install a
@@ -448,7 +448,7 @@ jobs:
             # above, which is exactly what removing the file leaves.
             rm -f "$src/.xlings.json"
             ( cd "$src" && mcpp build --release )
-            # ⚠️ BOTH SPELLINGS, AND NO `-perm`. The matrix reaches Windows and
+            # BOTH SPELLINGS, AND NO `-perm`. The matrix reaches Windows and
             # macOS runners too: on Windows the artefact is `mcpp.exe`, and
             # `-perm -u+x` is not a question that filesystem answers the way this
             # expects. Measured: `Finished release [optimized] in 173.44s`
@@ -462,13 +462,13 @@ jobs:
                     \( -name mcpp -o -name mcpp.exe \) | head -1)
             [ -n "$built" ] || { echo "::error::mcpp did not build from $MCPP_SOURCE_REF"; exit 1; }
             echo "$(cd "$(dirname "$built")" && pwd)" >> "$GITHUB_PATH"
-            # ⚠️ Reported, because a PATH entry that does not win looks exactly
+            # Reported, because a PATH entry that does not win looks exactly
             # like one that does until something built with the wrong engine.
             echo "under review: $("$built" --version)  (from $MCPP_SOURCE_REF)"
           fi
 
 
-      # ⚠️⚠️ A JOB THAT RESOLVES THE PUBLISHED SPECIFICATION CANNOT REVIEW A
+      # A JOB THAT RESOLVES THE PUBLISHED SPECIFICATION CANNOT REVIEW A
       # CHANGE TO ONE.
       #
       # Another step in this file already clones the specification and
@@ -480,7 +480,7 @@ jobs:
       #     synced index ... the index is current, so this name is either
       #     wrong or not published yet
       #
-      # ⭐⭐ THE UNIT IS THE JOB, NOT THE REPOSITORY. Measured 2026-08-28 across
+      # THE UNIT IS THE JOB, NOT THE REPOSITORY. Measured 2026-08-28 across
       # the eight repositories of this ecosystem while one change spanned all of
       # them: seven jobs in three repositories had this shape, and every one of
       # those repositories ALSO had a job that substituted correctly --- which is
@@ -500,11 +500,11 @@ jobs:
           else
             echo "the specification has no $OPENKAL_BRANCH; its default branch is used"
           fi
-          # ⚠️ EVERY MANIFEST THAT NAMES IT, AND BY THE SAME FORM. mcpp refuses
+          # EVERY MANIFEST THAT NAMES IT, AND BY THE SAME FORM. mcpp refuses
           # a graph in which one package reaches a dependency by version and
           # another by path, so substituting only the root leaves the build
           # refusing for a second reason instead of the first.
-          # ⚠️ NOT `sed -i'. This step runs on macOS and on Windows too, and
+          # NOT `sed -i'. This step runs on macOS and on Windows too, and
           # BSD sed requires an argument to -i that GNU sed refuses. A temporary
           # file is the spelling that holds on all three.
           subst() {   # subst <file> <relative-path-to-the-specification>
@@ -516,7 +516,7 @@ jobs:
           subst mcpp.toml .spec
       - name: The backend cross-builds
         run: |
-          # ⚠️ TWICE, AND THE FIRST IS ALLOWED TO FAIL — every row of this
+          # TWICE, AND THE FIRST IS ALLOWED TO FAIL — every row of this
           # matrix is a machine that has never targeted this triple, which is
           # precisely where mcpp's lazy install of the target C library shows.
           # The first build compiles sources needing its headers before they

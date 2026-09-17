@@ -1,6 +1,6 @@
 // openkal.time on the RISC-V Supervisor Binary Interface.
 //
-// ⚠️ THIS FILE EXISTS BECAUSE THE REASON RECORDED FOR ITS ABSENCE WAS WRONG.
+// THIS FILE EXISTS BECAUSE THE REASON RECORDED FOR ITS ABSENCE WAS WRONG.
 //
 // kal.cpp said, and said it as a design decision rather than as a note:
 //
@@ -21,7 +21,7 @@
 //
 //     t0=333572 t1=381292  ADVANCES
 //
-// ⭐ The lesson is the one the repository keeps relearning: a conclusion gets
+// The lesson is the one the repository keeps relearning: a conclusion gets
 // rechecked and the reason written beside it does not. The reason above sat in
 // a comment for as long as the file existed, and the two minutes that refuted
 // it were available the whole time.
@@ -32,7 +32,7 @@
 // the same counter, which on a machine with one execution context and no
 // scheduler is what sleeping is rather than a simulation of it.
 //
-// ⚠️ NOT a wall clock. SBI defines no facility for one, and no board fact would
+// NOT a wall clock. SBI defines no facility for one, and no board fact would
 // supply it either --- a real-time clock is a device, and reading it is what a
 // board backend does. `KAL_TIME_PROP_WALL_AVAILABLE` is left clear, which is
 // the specification's own way of saying so: clause 6.2 makes availability of a
@@ -45,7 +45,7 @@
 
 namespace {
 
-// ⚠️ THE ONE BOARD FACT THIS PACKAGE TAKES, AND IT TAKES IT AS AN INPUT.
+// THE ONE BOARD FACT THIS PACKAGE TAKES, AND IT TAKES IT AS AN INPUT.
 //
 // `rdtime` counts at a rate the architecture does not fix. The rate is
 // published in the device tree as `/cpus/timebase-frequency`, and this package
@@ -59,7 +59,7 @@ namespace {
 // project that knows which machine, rather than assumed by a package that does
 // not. The default is QEMU's `virt`, which is what the example runs on.
 //
-// ⚠️ A project on other hardware that leaves the default in place gets a clock
+// A project on other hardware that leaves the default in place gets a clock
 // that advances at the wrong rate. That is a stated bound and not a hidden one:
 // the figure has a name, the name appears in the manifest, and this comment is
 // what a reader finds when they look for it.
@@ -105,7 +105,7 @@ kal_duration kal_time_monotonic_granularity(void) {
     return g ? g : 1;
 }
 
-// ⚠️ Spinning, and that is the accurate implementation rather than a stand-in.
+// Spinning, and that is the accurate implementation rather than a stand-in.
 //
 // Sleeping means giving the machine to something else until a time arrives. On
 // a machine with one execution context and nothing to give it to, the time

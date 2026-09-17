@@ -1,7 +1,7 @@
 /* The memory map of a program this implementation starts, and the symbols its
  * startup object reads.
  *
- * ⭐⭐ THIS FILE IS A BOARD FACT AND THEREFORE BELONGS TO THIS PACKAGE.
+ * THIS FILE IS A BOARD FACT AND THEREFORE BELONGS TO THIS PACKAGE.
  *
  * Until now every program that wanted to run over OpenSBI carried its own copy:
  * `examples/hello` had one, `openkal-llvm-runtime/examples/same-source` had a
@@ -9,7 +9,7 @@
  * The load address is not a property of any of them — it is where this firmware
  * hands control over, which is precisely what this package exists to know.
  *
- * ⚠️ Measured 2026-08-23: the conformance suite BUILDS for `riscv64-none-elf`
+ * Measured 2026-08-23: the conformance suite BUILDS for `riscv64-none-elf`
  * against this implementation and then produces an image whose entry point is
  * 0x0, because nothing placed it. The suite is written to run in a program that
  * carries no other runtime, and asking it to carry a board's memory map would
@@ -19,7 +19,7 @@
  * ⇒ Supplied through `build.mcpp`, which reaches the CONSUMER's link line. A
  * program adds nothing and gets a layout that works.
  *
- * ⚠️ THE SIZES ARE GENEROUS RATHER THAN MINIMAL, and that is the one judgement
+ * THE SIZES ARE GENEROUS RATHER THAN MINIMAL, and that is the one judgement
  * in this file. A C program printing a string needs neither 256 KiB of stack
  * nor 16 MiB of heap; a program carrying a C library and a C++ standard library
  * does, and it exhausts the smaller figures during its own initialisation —
@@ -32,7 +32,7 @@
  * OpenSBI occupies 0x80000000 upward and hands control to the next stage at
  * 0x80200000, which is why this address and not the start of RAM.
  *
- * ⚠️ FIRMWARE JUMPS TO THE LOWEST LOADED ADDRESS AND NOT TO THE ENTRY THE IMAGE
+ * FIRMWARE JUMPS TO THE LOWEST LOADED ADDRESS AND NOT TO THE ENTRY THE IMAGE
  * RECORDS. Measured 2026-08-23, after an attempt to put the ELF header inside
  * the first loaded segment so that `__ehdr_start` would be usable: the entry
  * moved to 0x80200270, OpenSBI still announced `Next Address 0x80200000`, and
@@ -40,7 +40,7 @@
  * the load address has to be the first instruction, and everything that would
  * otherwise be read out of the program headers is named here instead.
  *
- * ⚠️ FOUR THINGS BEYOND THE MINIMUM, AND EACH IS SOMETHING A C++ PROGRAM HAS
+ * FOUR THINGS BEYOND THE MINIMUM, AND EACH IS SOMETHING A C++ PROGRAM HAS
  * THAT A C ONE DOES NOT.
  *
  *   The initialiser arrays. Every static object with a constructor puts a
@@ -127,7 +127,7 @@ SECTIONS {
     /* 256 KiB of stack. See the note above. */
     . = ALIGN(16); . = . + 0x40000; __stack_top = .;
 
-    /* ⭐ AND THE HEAP, WHICH FOR THIS PROGRAM CANNOT BE THE IMPLEMENTATION'S
+    /* AND THE HEAP, WHICH FOR THIS PROGRAM CANNOT BE THE IMPLEMENTATION'S
      * DEFAULT.
      *
      * openkal-opensbi carries a 64 KiB static region for a program that

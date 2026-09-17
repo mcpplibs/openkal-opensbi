@@ -1,6 +1,6 @@
 // openkal.env on the RISC-V Supervisor Binary Interface.
 //
-// ⚠️ EVERY ANSWER HERE IS EMPTY, AND THAT IS AN IMPLEMENTATION RATHER THAN A
+// EVERY ANSWER HERE IS EMPTY, AND THAT IS AN IMPLEMENTATION RATHER THAN A
 // STUB. THE DIFFERENCE IS THE ONE CLAUSE 6.2 TURNS ON.
 //
 // Clause 6.2 forbids the arrangement this file could be mistaken for: "an
@@ -18,7 +18,7 @@
 // this one returns for the first of none, by the same rule, and no caller needs
 // a special case for either.
 //
-// ⚠️ WHY IT IS EMPTY, WHICH IS A FACT ABOUT THE ENTRY CONTRACT AND NOT ABOUT SBI
+// WHY IT IS EMPTY, WHICH IS A FACT ABOUT THE ENTRY CONTRACT AND NOT ABOUT SBI
 //
 // Firmware enters the image at its load address with a hart identifier and a
 // device tree in registers. Neither is a command line. A device tree CAN carry

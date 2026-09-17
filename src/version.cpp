@@ -11,7 +11,7 @@ extern "C" {
 
 kal_u64 kal_version(void) { return KAL_VERSION; }
 
-// ⚠️ THE WORD AGREES WITH WHAT IS EXPORTED, WHICH IS THE WHOLE OF ITS VALUE.
+// THE WORD AGREES WITH WHAT IS EXPORTED, WHICH IS THE WHOLE OF ITS VALUE.
 // This machine has no storage, no second image and no scheduler, so
 // `openkal.fs', `openkal.process' and `openkal.task' are absent as definitions
 // --- and the word says so rather than leaving a consumer to discover it by
