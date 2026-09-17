@@ -3,7 +3,7 @@
  * SBI is the interface a RISC-V supervisor has to the firmware beneath it. It
  * is invoked with `ecall`: the extension identifier in a7, the function
  * identifier in a6, arguments in a0-a5, and a two-word result in a0 (an error
- * code) and a1 (a value). ⚠️ That shape is the same two-word return openkal
+ * code) and a1 (a value). That shape is the same two-word return openkal
  * specifies for its own results, and for the same reason — it is what crosses a
  * privilege boundary in registers on this architecture.
  *

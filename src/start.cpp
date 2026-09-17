@@ -5,7 +5,7 @@
 // fact about what hands control over, and a consumer that contained these steps
 // would contain a copy of them per environment.
 //
-// ⚠️ WHAT FIRMWARE HANDS OVER, AND WHAT IT DOES NOT.
+// WHAT FIRMWARE HANDS OVER, AND WHAT IT DOES NOT.
 //
 // A kernel starts a program with arguments on the stack, a thread pointer to
 // establish, program headers to report, and a stack already there. Firmware
@@ -19,7 +19,7 @@
 // exist, and it stops. And it does not do the thing the other spends most of
 // its length on, because there is nothing to read.
 //
-// ⚠️ THE STACK COMES FROM THE PROGRAM'S LINKER SCRIPT AND CANNOT COME FROM HERE.
+// THE STACK COMES FROM THE PROGRAM'S LINKER SCRIPT AND CANNOT COME FROM HERE.
 //
 // `__stack_top' is defined by the linker script the program supplies, because
 // where the stack goes is a statement about the image's layout and the image is
@@ -48,7 +48,7 @@ int main(int, char**, char**);
 
 using initialiser = void (*)(int, char**, char**);
 
-// ⚠️ NOT in an anonymous namespace, and that is the compiler's rule rather than
+// NOT in an anonymous namespace, and that is the compiler's rule rather than
 // a preference: internal linkage and a weak declaration are contradictory, and
 // clang says so in as many words. The linker script defines these, and a
 // program built without one gets the null range the weak declaration is for.
@@ -60,7 +60,7 @@ using initialiser = void (*)(int, char**, char**);
 namespace {
 
 void run_initialisers() {
-    // ⚠️ Only when no C library took the hand-over. One that did runs these
+    // Only when no C library took the hand-over. One that did runs these
     // itself, and running them twice constructs every static object twice.
     static char* nothing = nullptr;
     for (initialiser* p = __preinit_array_start; p != __preinit_array_end; ++p)
@@ -71,14 +71,14 @@ void run_initialisers() {
 
 }  // namespace
 
-// ⭐⭐ THE THREAD POINTER, WHICH IS THE OTHER THING A KERNEL WOULD HAVE DONE.
+// THE THREAD POINTER, WHICH IS THE OTHER THING A KERNEL WOULD HAVE DONE.
 //
 // openkal-linux's start object establishes it too, and for the same reason: the
 // register that names the current context's thread-local storage is set by
 // whoever creates the context, and where a program carries no loader, that is
 // the implementation.
 //
-// ⚠️ WHAT IT LOOKS LIKE WHEN IT IS MISSING IS NOT "NO THREAD-LOCAL STORAGE".
+// WHAT IT LOOKS LIKE WHEN IT IS MISSING IS NOT "NO THREAD-LOCAL STORAGE".
 //
 // Measured 2026-08-23. A bare-metal `import std;` program started, printed, and
 // faulted at the first `throw`:
@@ -91,12 +91,12 @@ void run_initialisers() {
 // about the message says "thread pointer": it names an exception function and
 // an address, and both look like memory corruption.
 //
-// ⚠️ AND THE C LIBRARY DOES NOT COVER THIS. openkal-musl keeps ITS OWN thread
+// AND THE C LIBRARY DOES NOT COVER THIS. openkal-musl keeps ITS OWN thread
 // pointer in a variable rather than in the register --- that is what lets it
 // run where the register means nothing --- so musl's startup succeeding says
 // nothing about whether the TOOLCHAIN's thread-locals work. Two mechanisms,
 // and only one of them was established.
-// ⚠️ FROM THE LINKER SCRIPT, NOT FROM THE PROGRAM HEADERS.
+// FROM THE LINKER SCRIPT, NOT FROM THE PROGRAM HEADERS.
 //
 // The obvious source is PT_TLS, reached through `__ehdr_start`. That requires
 // the ELF header to lie inside a loaded segment, which requires it to be at the
@@ -124,7 +124,7 @@ kal_uintptr round_up(kal_uintptr n, kal_uintptr to) { return (n + to - 1) & ~(to
 // it as `TLS_ABOVE_TP` with `GAP_ABOVE_TP 0` --- which is where this was taken
 // from rather than from memory.
 void establish_thread_pointer() {
-    // ⚠️ These symbols carry their VALUE in their ADDRESS. A linker script
+    // These symbols carry their VALUE in their ADDRESS. A linker script
     // assignment defines an absolute symbol; there is no object to load from,
     // and reading one as if there were gives whatever lies at that address.
     const auto filesz = reinterpret_cast<kal_uintptr>(__tls_filesz);
@@ -153,7 +153,7 @@ void establish_thread_pointer() {
 
 }  // namespace
 
-// ⭐ WHAT crtbegin WOULD HAVE SUPPLIED, AND WHY ITS ABSENCE IS A LINK ERROR
+// WHAT crtbegin WOULD HAVE SUPPLIED, AND WHY ITS ABSENCE IS A LINK ERROR
 // ABOUT A RELOCATION RANGE RATHER THAN ABOUT A MISSING NAME.
 //
 // Every static object with a destructor registers it through `__cxa_atexit`,
@@ -166,7 +166,7 @@ void establish_thread_pointer() {
 //     relocation R_RISCV_PCREL_HI20 out of range: -525086
 //     references '__dso_handle'
 //
-// ⚠️ A reader who has not seen this before will read that as a code-model
+// A reader who has not seen this before will read that as a code-model
 // problem, and the code model is already the widest one. The problem is that
 // the symbol is not in the image. Defining it here puts it in the image, and
 // the value is its own address because that is what identifies an image
@@ -177,7 +177,7 @@ extern "C" { void* __dso_handle = &__dso_handle; }
 // the sequence needs nothing to have been set up before it runs --- which is
 // the situation it is in.
 //
-// ⚠️ In `.text.entry` rather than `.text`, because the linker script places
+// In `.text.entry` rather than `.text`, because the linker script places
 // that section first. Firmware jumps to the load address, not to `_start`: the
 // entry recorded in the image header is not read by firmware that loads a raw
 // image, so the first instruction at the load address has to BE this one.

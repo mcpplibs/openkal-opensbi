@@ -9,7 +9,7 @@
 //
 // SBI has no such property. The console here is a call into firmware that
 // already knows the machine, so one binary runs under OpenSBI on QEMU's `virt`
-// and on a real board without being rebuilt. ⭐ That makes this the portable
+// and on a real board without being rebuilt. That makes this the portable
 // RISC-V backend and the board's the specific one — and a project picks by
 // which property it needs, not by which is better.
 //
@@ -22,7 +22,7 @@
 // clause 6.2 says the remedy for an operation that cannot be provided is that
 // its absence be expressed by its absence rather than by a run-time refusal.
 //
-// ⚠️ `time` USED TO BE ON THAT LIST, WITH A REASON, AND THE REASON WAS WRONG.
+// `time` USED TO BE ON THAT LIST, WITH A REASON, AND THE REASON WAS WRONG.
 //
 // It read: SBI can arm a timer interrupt, which is a mechanism for a kernel
 // rather than a clock a program can read. The first half is true; the second
@@ -42,12 +42,12 @@ constexpr kal_uintptr kStdin  = 0;
 constexpr kal_uintptr kStdout = 1;
 constexpr kal_uintptr kStderr = 2;
 
-// ⚠️ Probed once rather than assumed. DBCN arrived in SBI v2.0, and firmware
+// Probed once rather than assumed. DBCN arrived in SBI v2.0, and firmware
 // older than that answers `SBI_ERR_NOT_SUPPORTED` — on which every write would
 // silently transfer nothing. The legacy extension is one character per trap and
 // is deprecated, which is exactly why it is the fallback and not the default.
 //
-// ⚠️ A tri-state file-scope variable, and NOT a function-local `static`.
+// A tri-state file-scope variable, and NOT a function-local `static`.
 //
 // A guarded local static compiles to `__cxa_guard_acquire`/`__cxa_guard_release`
 // — thread-safe initialisation supplied by the C++ runtime, which a
@@ -104,7 +104,7 @@ kal_intptr write_all(const unsigned char* p, kal_uintptr n) {
 // silently wrong is a simulation. Exhaustion is a defined outcome — `kal_alloc`
 // returns null — and every caller already has to handle it.
 //
-// ⚠️ `kal_free` therefore does nothing, and that is stated rather than hidden.
+// `kal_free` therefore does nothing, and that is stated rather than hidden.
 // A program whose allocation pattern needs reuse should place a real allocator
 // above this one; that is a policy decision, and openkal carries mechanism.
 alignas(16) unsigned char g_heap[OPENKAL_OPENSBI_HEAP_BYTES];
@@ -112,7 +112,7 @@ kal_uintptr g_used = 0;
 
 }  // namespace
 
-// ⭐ AND THE PROGRAM MAY SAY WHERE INSTEAD, FOR THE SAME REASON IT SAYS WHERE
+// AND THE PROGRAM MAY SAY WHERE INSTEAD, FOR THE SAME REASON IT SAYS WHERE
 // THE STACK IS.
 //
 // The region above is a static array, which means its size is in the image and
@@ -121,7 +121,7 @@ kal_uintptr g_used = 0;
 // carries a C library and a C++ standard library allocates during its own
 // initialisation, before `main`, and 64 KiB does not survive it.
 //
-// ⚠️ AND THE WAY THAT SHOWS IS NOT A DIAGNOSTIC. Measured 2026-08-23: a
+// AND THE WAY THAT SHOWS IS NOT A DIAGNOSTIC. Measured 2026-08-23: a
 // bare-metal `import std;` program linked, started, and printed NOTHING — the
 // allocator ran out inside the standard library's static initialisation, before
 // any stream existed to report it on. A message would have needed the very
@@ -146,7 +146,7 @@ namespace {
 struct region { unsigned char* base; kal_uintptr size; };
 
 region heap_region() {
-    // ⚠️ `+` on each: these are arrays, and comparing two arrays directly is
+    // `+` on each: these are arrays, and comparing two arrays directly is
     // deprecated in this dialect because it compares addresses while reading
     // like a comparison of contents. Decaying them says which was meant.
     if (+__heap_start != nullptr && +__heap_end > +__heap_start)
@@ -183,7 +183,7 @@ kal_stream kal_stderr(void) { return kal_stream{kStderr}; }
 
 kal_intptr kal_stream_write(kal_stream s, const void* buf, kal_uintptr n) {
     if (s.h != kStdout && s.h != kStderr) return -kal_err_invalid;
-    // ⚠️ Both streams reach the same console. SBI has one, and reporting two
+    // Both streams reach the same console. SBI has one, and reporting two
     // that are secretly one would be a claim the firmware cannot honour.
     return write_all(static_cast<const unsigned char*>(buf), n);
 }
@@ -250,7 +250,7 @@ void kal_free(void*, kal_uintptr, kal_uintptr) {}
 
 // ── The interfaces this machine does not have are absent, and stay absent ───
 //
-// ⚠️ NO `kal_fs_props`, NO `kal_task_props`, AND THAT IS THE MECHANISM RATHER
+// NO `kal_fs_props`, NO `kal_task_props`, AND THAT IS THE MECHANISM RATHER
 // THAN AN OMISSION.
 //
 // 0.1.3 defined both as zero, because a capability-querying program failed to

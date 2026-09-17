@@ -1,6 +1,6 @@
 # openkal on the RISC-V Supervisor Binary Interface.
 #
-# ⭐ THE PORTABLE RISC-V BACKEND, AS DISTINCT FROM A BOARD'S OWN.
+# THE PORTABLE RISC-V BACKEND, AS DISTINCT FROM A BOARD'S OWN.
 #
 # A board-supplied backend writes to a device address, and that address is a
 # board fact: the same binary on a second RISC-V machine writes to something
@@ -14,7 +14,7 @@
 [package]
 namespace   = "mcpplibs"
 name        = "openkal-opensbi"
-version     = "0.6.0"
+version     = "0.7.0"
 description = "An implementation of openkal on the RISC-V Supervisor Binary Interface, portable across every machine whose firmware provides one"
 license     = "Apache-2.0"
 
@@ -33,9 +33,9 @@ repo        = "https://github.com/mcpplibs/openkal-opensbi"
 # The contract, not an implementation of it. Declaring it turns a version
 # mismatch into a resolution-time message rather than a link-time one.
 [dependencies]
-openkal = "0.12.0"
+openkal = "0.13.0"
 
-# ⭐ WHAT RECEIVES CONTROL, WHICH IS A STATEMENT ABOUT THE PROGRAM.
+# WHAT RECEIVES CONTROL, WHICH IS A STATEMENT ABOUT THE PROGRAM.
 #
 # A program that already carries a runtime has an entry object of its own and
 # must not get a second. A program that does not — one whose C library is
@@ -61,7 +61,7 @@ flags = [
                                  "-fno-asynchronous-unwind-tables"] },
 ]
 
-# ⚠️ TWO FIGURES THAT BELONG TO THE MACHINE, DECLARED RATHER THAN ASSUMED.
+# TWO FIGURES THAT BELONG TO THE MACHINE, DECLARED RATHER THAN ASSUMED.
 #
 # The heap size is a build input because SBI provides no allocator and the
 # region therefore has to come from somewhere. 64 KiB is enough for the
