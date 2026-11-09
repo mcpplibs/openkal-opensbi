@@ -248,6 +248,24 @@ void* kal_alloc(kal_uintptr size, kal_uintptr align) {
 // rather than an omission.
 void kal_free(void*, kal_uintptr, kal_uintptr) {}
 
+// What the environment can give this program now (openkal 0.23): the region the
+// allocator hands out, and what of it is not yet handed out. Nothing is given
+// back (kal_free above), so the second only falls.
+int kal_memory_info(kal_memory_status* out) {
+    if (out == nullptr || out->self_size < 2 * sizeof(kal_u32)) return kal_err_invalid;
+    const region r = heap_region();
+    out->present = 0;
+    if (out->self_size >= 2 * sizeof(kal_u32) + sizeof(kal_u64)) {
+        out->total_bytes = r.size;
+        out->present |= KAL_MSTATUS_TOTAL;
+    }
+    if (out->self_size >= 2 * sizeof(kal_u32) + 2 * sizeof(kal_u64)) {
+        out->available_bytes = r.size > g_used ? r.size - g_used : 0;
+        out->present |= KAL_MSTATUS_AVAILABLE;
+    }
+    return kal_ok;
+}
+
 // ── The interfaces this machine does not have are absent, and stay absent ───
 //
 // NO `kal_fs_props`, NO `kal_task_props`, AND THAT IS THE MECHANISM RATHER

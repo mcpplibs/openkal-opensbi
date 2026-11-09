@@ -4,9 +4,18 @@ An implementation of [openkal][kal] on the RISC-V Supervisor Binary Interface.
 
 ```toml
 [dependencies]
-openkal         = "0.15.0"
-openkal-opensbi = "0.8.3"
+openkal         = "0.25.0"
+openkal-opensbi = "0.9.0"
 ```
+
+## What 0.9 adds (openkal 0.25)
+
+The interfaces this implementation provides are those of openkal 0.25.
+`kal_memory_info` (0.23) states the allocator's region and what of it is not yet
+handed out; `kal_env_image`, `kal_env_loader` and `kal_env_system` (0.17) report
+`kal_err_not_found`, since a program here is started from no named image, by no
+loader and on firmware that names no system; `kal_env_resources` (0.23) is the
+default preference.
 
 ## The portable RISC-V backend, as distinct from a board's own
 
