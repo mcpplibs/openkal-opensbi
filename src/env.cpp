@@ -59,4 +59,16 @@ kal_intptr kal_env_var_at(kal_uintptr, char*, kal_uintptr) {
     return -kal_err_not_found;
 }
 
+// THE IMAGE, THE LOADER AND THE SYSTEM (openkal 0.17): a program here is not
+// started from a named image, is loaded by nothing this interface names, and
+// runs upon firmware that gives its environment no system name. Each is the
+// condition the operation states for that case.
+kal_intptr kal_env_image(char*, kal_uintptr)  { return -kal_err_not_found; }
+kal_intptr kal_env_loader(char*, kal_uintptr) { return -kal_err_not_found; }
+kal_intptr kal_env_system(char*, kal_uintptr) { return -kal_err_not_found; }
+
+// The resource preference (openkal 0.23): nothing starts a program here with
+// one, so it is the default.
+int kal_env_resources(void) { return KAL_RESOURCES_BALANCED; }
+
 }  // extern "C"
