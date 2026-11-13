@@ -5,8 +5,15 @@ An implementation of [openkal][kal] on the RISC-V Supervisor Binary Interface.
 ```toml
 [dependencies]
 openkal         = "0.25.0"
-openkal-opensbi = "0.9.0"
+openkal-opensbi = "0.9.1"
 ```
+
+## What 0.9.1 corrects
+
+The manifest declares `openkal = "^0.25.0"`. An implementation written against a
+patch release of the specification conforms to every later patch of that minor
+version (openkal clause 8); with an exact version, a consumer that names openkal
+0.25.1 could not resolve with this implementation.
 
 ## What 0.9 adds (openkal 0.25)
 
