@@ -4,9 +4,18 @@ An implementation of [openkal][kal] on the RISC-V Supervisor Binary Interface.
 
 ```toml
 [dependencies]
-openkal         = "0.25.0"
-openkal-opensbi = "0.9.1"
+openkal         = "0.26.0"
+openkal-opensbi = "0.10.0"
 ```
+
+## What 0.10 changes (openkal 0.26)
+
+Nothing but the specification's version: the manifest declares `openkal =
+"^0.26.0"`. openkal 0.26 requires two things of `openkal.process`, a start
+bounded by the environment alone (clause 7.6) and a unit claimed only where a
+reference can be made (clause 7.18). This implementation does not provide that
+interface, and a program here receives no arguments and no variables, so there
+is nothing of either clause to hold.
 
 ## What 0.9.1 corrects
 
