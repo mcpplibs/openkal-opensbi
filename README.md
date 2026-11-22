@@ -5,8 +5,29 @@ An implementation of [openkal][kal] on the RISC-V Supervisor Binary Interface.
 ```toml
 [dependencies]
 openkal         = "0.26.0"
-openkal-opensbi = "0.10.0"
+openkal-opensbi = "0.10.1"
 ```
+
+## What 0.10.1 corrects
+
+The manifest states the interfaces this implementation provides,
+`[kernel-abi] provides-interfaces`: `openkal.abort`, `openkal.env`,
+`openkal.memory`, `openkal.stream` and `openkal.time`, which `kal_interfaces()`
+answered already. A package that states no list is read as providing every
+interface, so a C library above it (openkal-musl, which asks
+`cfg(interface = ...)`) was built calling `openkal.fs`, `.process` and `.task`,
+and the link failed on the names this implementation does not define.
+
+A program's status leaves the machine. SBI's system reset carries a reason,
+none or failure, and not a number, so a program that ended with 7 and one that
+ended with 0 shut the machine down alike: measured under OpenSBI on QEMU's
+`virt`, the emulator ended with 0 for a program that returned 7. The standalone
+start reads the device tree the firmware hands over in `a1`; where it describes
+a test finisher (a node compatible with `sifive,test1` or `sifive,test0`),
+`kal_exit` writes the status to its register, `(status << 16) | 0x3333`, or
+`0x5555` for zero, and the machine ends with that status; an abort writes 134.
+Where the tree describes none, the reset's reason is what remains, and nothing
+is written to a machine that has no such device.
 
 ## What 0.10 changes (openkal 0.26)
 

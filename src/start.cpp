@@ -31,6 +31,7 @@
 // other does: a program written directly against openkal has no such symbol,
 // and then this file runs the initialisers and calls `main' itself.
 #ifdef OPENKAL_OPENSBI_STANDALONE
+#include "finisher.h"
 
 #include <openkal/abort.h>
 #include <openkal/memory.h>
@@ -42,7 +43,7 @@ int main(int, char**, char**);
 [[gnu::weak]] int __libc_start_main(int (*)(int, char**, char**), int, char**,
                                     void (*)(), void (*)(), void (*)());
 
-[[noreturn]] void __okb_start_c(void);
+[[noreturn]] void __okb_start_c(unsigned long hart, const void* fdt);
 
 }
 
@@ -175,7 +176,8 @@ extern "C" { void* __dso_handle = &__dso_handle; }
 
 // The stack, then C. `la` of a linker-defined symbol resolves at link time, so
 // the sequence needs nothing to have been set up before it runs --- which is
-// the situation it is in.
+// the situation it is in. The firmware's a0 and a1, the hart and the device
+// tree, are left as they arrived: they are the C function's two arguments.
 //
 // In `.text.entry` rather than `.text`, because the linker script places
 // that section first. Firmware jumps to the load address, not to `_start`: the
@@ -190,7 +192,10 @@ asm(".section .text.entry\n"
     "1: j 1b\n"
     ".size _start,.-_start\n");
 
-extern "C" [[noreturn]] void __okb_start_c(void) {
+extern "C" [[noreturn]] void __okb_start_c(unsigned long, const void* fdt) {
+    // The device the machine states for ending with a status (finisher.cpp, 0.10.1).
+    okbsbi_find_finisher(fdt);
+
     // Zero and null rather than a vector: openkal.env is what a program above
     // this reads its arguments through, and this environment's answer there is
     // that there are none. Passing the same answer here keeps the two from

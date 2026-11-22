@@ -34,6 +34,7 @@
 #include <openkal/memory.h>
 #include <openkal/stream.h>
 
+#include "finisher.h"
 #include "sbi.h"
 
 namespace {
@@ -163,6 +164,8 @@ KAL_NORETURN void kal_abort(const char* msg, kal_uintptr len) {
     if (msg && len) write_all(reinterpret_cast<const unsigned char*>(msg), len);
     const unsigned char nl = '\n';
     write_all(&nl, 1);
+    // 134, as a program ended by SIGABRT reports itself on the systems that have the signal.
+    okbsbi_finish(134);
     sbi_call(SBI_EXT_SRST, SBI_SRST_RESET,
              SBI_SRST_TYPE_SHUTDOWN, SBI_SRST_REASON_FAILURE, 0);
     // Reached only if the firmware declined to reset, which no conforming
@@ -171,6 +174,7 @@ KAL_NORETURN void kal_abort(const char* msg, kal_uintptr len) {
 }
 
 KAL_NORETURN void kal_exit(int code) {
+    okbsbi_finish(code);
     sbi_call(SBI_EXT_SRST, SBI_SRST_RESET, SBI_SRST_TYPE_SHUTDOWN,
              code == 0 ? SBI_SRST_REASON_NONE : SBI_SRST_REASON_FAILURE, 0);
     for (;;) {}
