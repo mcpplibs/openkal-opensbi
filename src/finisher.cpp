@@ -49,11 +49,16 @@ void okbsbi_find_finisher(const void* fdt) {
     const u8* structure = h + be32(h + 8);
     const char* strings = reinterpret_cast<const char*>(h + be32(h + 12));
     const u32 size = be32(h + 36);
-    // The address cells of each node's parent, and what the node at each depth has stated.
-    u32 cells[kMaxDepth] = {2};
-    bool compatible[kMaxDepth] = {};
-    u64 reg[kMaxDepth] = {};
+    // The address cells each node states for its children, and what the node at each depth has
+    // stated. Each depth is set as its node begins, and not zeroed in a block: a program with no C
+    // library has no `memset' for the compiler to call.
+    u32 cells[kMaxDepth];
+    bool compatible[kMaxDepth];
+    u64 reg[kMaxDepth];
     u32 depth = 0;
+    cells[0] = 2;
+    compatible[0] = false;
+    reg[0] = 0;
     for (u32 at = 0; at + 4 <= size;) {
         const u32 token = be32(structure + at);
         at += 4;
