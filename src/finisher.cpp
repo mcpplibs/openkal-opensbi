@@ -58,14 +58,17 @@ void okbsbi_find_finisher(const void* fdt) {
         const u32 token = be32(structure + at);
         at += 4;
         if (token == kBeginNode) {
-            while (structure[at]) ++at;
+            while (at < size && structure[at]) ++at;
             at = (at + 4) & ~3u;
             if (++depth >= kMaxDepth) return;
             cells[depth] = 2;
             compatible[depth] = false;
             reg[depth] = 0;
         } else if (token == kProp) {
+            // A length beyond the structure is a tree this reader does not trust.
+            if (at + 8 > size) return;
             const u32 len = be32(structure + at), name = be32(structure + at + 4);
+            if (len > size - at - 8) return;
             const u8* value = structure + at + 8;
             at = (at + 8 + len + 3) & ~3u;
             const char* n = strings + name;
